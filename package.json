@@ -66,7 +66,17 @@
         "i18nNexus.translationBatchSize": {
           "type": "number",
           "default": 500,
-          "description": "Number of keys to translate in each batch. Adjust based on the model's context window."
+          "description": "Number of keys to translate in each batch. Used when streaming very large files."
+        },
+        "i18nNexus.batchTokenLimit": {
+          "type": "number",
+          "default": 8000,
+          "description": "Approximate token threshold for a single batch. Batch size is reduced when this limit is approached."
+        },
+        "i18nNexus.parallelBatchCount": {
+          "type": "number",
+          "default": 1,
+          "description": "Number of batches to translate in parallel. Increase carefully based on provider limits."
         },
         "i18nNexus.basePath": {
           "type": "string",

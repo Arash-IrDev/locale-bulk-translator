@@ -13,7 +13,9 @@ This project is currently in **early development** – more features, documentat
 - Handle **massive files** (20k+ lines) with smart chunking.
 - Preserve keys, placeholders, formatting, and structure perfectly.
 - Provide **diff view** to preview translations and approve or reject changes before applying.
-
+- Stream huge locale files without loading them entirely in memory.
+- Dynamically adjust batch size based on token usage.
+- Optional parallel processing of translation batches.
 ---
 
 ## 📦 Current Status
@@ -45,6 +47,14 @@ This behaviour can be turned off by setting `"i18nNexus.enableDiffView": false` 
 ## 🛠 Contributing
 
 This repo will soon open for contributions. Until then, development is handled on the `main` branch, with upstream updates tracked via `upstream-main`.
+
+## Streaming & Batch Options
+
+The extension can stream extremely large translation files. Configure the following settings in VS Code:
+
+- `i18nNexus.translationBatchSize` – number of keys processed per batch when streaming.
+- `i18nNexus.batchTokenLimit` – approximate token threshold before the batch size is reduced.
+- `i18nNexus.parallelBatchCount` – how many batches to translate in parallel.
 
 ---
 
