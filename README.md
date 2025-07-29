@@ -6,13 +6,13 @@ This project is currently in **early development** – more features, documentat
 
 ---
 
-## 🚀 What it will do
+## 🚀 Features
 
 - Detect `locales/` folders (or any translation key/value files) in your project.
 - Translate values into multiple languages using GPT, Gemini, or local LLMs.
 - Handle **massive files** (20k+ lines) with smart chunking.
 - Preserve keys, placeholders, formatting, and structure perfectly.
-- Provide **diff view** to approve or reject translation chunks before applying.
+- Provide **diff view** to preview translations and approve or reject changes before applying.
 
 ---
 
@@ -29,9 +29,16 @@ This project is currently in **early development** – more features, documentat
 - [ ] Basic VS Code extension scaffolding  
 - [ ] Locale folder detection logic  
 - [ ] AI translation engine integration (OpenAI + local LLM)  
-- [ ] Chunking system for large files  
-- [ ] Diff/approval UI for translations  
-- [ ] CLI support (optional)
+- [ ] Chunking system for large files
+ - [ ] CLI support (optional)
+
+---
+
+## 🔍 Diff Preview
+
+i18n Nexus opens a diff view after generating translations so you can review the proposed changes. Choose **Apply Changes** to write the file or **Cancel** to keep the original.
+
+This behaviour can be turned off by setting `"i18nNexus.enableDiffView": false` in your VS Code settings.
 
 ---
 

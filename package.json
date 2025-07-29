@@ -178,6 +178,11 @@
           "type": "string",
           "default": "",
           "description": "API Key for the selected LLM provider"
+        },
+        "i18nNexus.enableDiffView": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show diff view before applying translation changes"
         }
       }
     }
