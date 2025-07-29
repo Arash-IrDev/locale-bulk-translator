@@ -400,9 +400,9 @@ export class TranslationManager {
                 if (!(key in target) || typeof target[key] !== 'object') {
                     result[newPath] = base[key];
                 } else {
-                    if (!(newPath in result)) result[newPath] = {};
+                    if (!(newPath in result)) {result[newPath] = {};}
                     this.deepCompare(base[key], target[key], original[key] || {}, result[newPath], newPath);
-                    if (Object.keys(result[newPath]).length === 0) delete result[newPath];
+                    if (Object.keys(result[newPath]).length === 0) {delete result[newPath];}
                 }
             } else {
                 if (!(key in target) || target[key] === '' || 
