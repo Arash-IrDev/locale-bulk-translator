@@ -1,0 +1,12 @@
+{
+  "name": "test-project",
+  "version": "1.0.0",
+  "description": "Test project for i18n Nexus extension",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["i18n", "translation", "test"],
+  "author": "Test User",
+  "license": "MIT"
+} 

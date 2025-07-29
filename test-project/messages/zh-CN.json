@@ -1,0 +1,40 @@
+{
+  "common": {
+    "welcome": "欢迎使用我们的应用",
+    "loading": "加载中...",
+    "error": "发生错误",
+    "success": "操作成功",
+    "cancel": "取消",
+    "confirm": "确认",
+    "save": "保存",
+    "delete": "删除",
+    "edit": "编辑",
+    "add": "添加"
+  },
+  "navigation": {
+    "home": "首页",
+    "about": "关于我们",
+    "contact": "联系我们",
+    "settings": "设置",
+    "profile": "个人资料"
+  },
+  "forms": {
+    "email": "邮箱地址",
+    "password": "密码",
+    "username": "用户名",
+    "firstName": "名字",
+    "lastName": "姓氏",
+    "phone": "电话号码",
+    "address": "地址",
+    "city": "城市",
+    "country": "国家"
+  },
+  "messages": {
+    "loginSuccess": "登录成功！",
+    "loginFailed": "登录失败，请检查您的凭据",
+    "registrationSuccess": "注册成功！",
+    "passwordReset": "密码重置链接已发送到您的邮箱",
+    "profileUpdated": "个人资料已更新",
+    "dataSaved": "数据已保存"
+  }
+} 
