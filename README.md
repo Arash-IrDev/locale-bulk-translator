@@ -41,6 +41,13 @@ This repo will soon open for contributions. Until then, development is handled o
 
 ---
 
+## 🙏 Credits
+
+This project is inspired by and builds upon concepts from  
+**[i18n-intl](https://github.com/iaiuse/i18n-intl)** by [iaiuse](https://github.com/iaiuse).
+
+---
+
 ## 📄 License
 
 This project is licensed under the **MIT License** – see the [LICENSE](LICENSE) file for details.
