@@ -281,11 +281,17 @@ export class TranslationManager {
     
         this.outputChannel.appendLine(`Translating ${Object.keys(toTranslate).length} keys...`);
     
-        // 使用批量翻译方法
-        const { translatedContent, tokensUsed } = await this.llmService.translate(toTranslate, lang);
-    
-        // 合并翻译后的内容和目标语言文件内容
-        const newContent = this.mergeContents(targetContent, translatedContent, diff.deleted);
+        let newContent = targetContent;
+        let tokensUsed = { inputTokens: 0, outputTokens: 0 };
+
+        for await (const batchResult of this.llmService.translateGenerator(toTranslate, lang)) {
+            newContent = this.mergeContents(newContent, batchResult.translatedContent, {});
+            fs.writeFileSync(targetFilePath, JSON.stringify(newContent, null, 2));
+            tokensUsed.inputTokens += batchResult.tokensUsed.inputTokens;
+            tokensUsed.outputTokens += batchResult.tokensUsed.outputTokens;
+        }
+
+        newContent = this.mergeContents(newContent, {}, diff.deleted);
     
         // 验证翻译结果
         this.outputChannel.appendLine('Validating translation...');

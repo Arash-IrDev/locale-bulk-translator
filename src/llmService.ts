@@ -12,12 +12,16 @@ export class LLMService {
     private logger: Logger;
     private outputChannel: vscode.OutputChannel;
     private batchSize: number;
+    private batchTokenLimit: number;
+    private parallelBatchCount: number;
 
     constructor(logger: Logger, channel: vscode.OutputChannel) {
         this.logger = logger;
         this.outputChannel = channel;
         const config = vscode.workspace.getConfiguration('i18nNexus');
-        this.batchSize = config.get('translationBatchSize', 1000); // 默认批次大小为1000
+        this.batchSize = config.get('translationBatchSize', 1000);
+        this.batchTokenLimit = config.get('batchTokenLimit', 8000);
+        this.parallelBatchCount = Math.max(1, config.get('parallelBatchCount', 1));
         this.initializeProvider();
     }
 
@@ -66,45 +70,69 @@ export class LLMService {
         }
     }
 
+    public async *translateGenerator(content: any, targetLang: string): AsyncGenerator<TranslationResult> {
+        const batchGen = this.splitIntoBatches(content, this.batchSize);
+        let index = 0;
+        for (const batch of batchGen) {
+            index++;
+            this.outputChannel.appendLine(`Translating batch ${index}...`);
+            const result = await this.provider.translate(batch, targetLang);
+            if (result.tokensUsed.inputTokens + result.tokensUsed.outputTokens > this.batchTokenLimit) {
+                this.batchSize = Math.max(1, Math.floor(this.batchSize / 2));
+                this.outputChannel.appendLine(`Token usage high, reducing batch size to ${this.batchSize}`);
+            }
+            yield result;
+        }
+    }
+
     private async translateInBatches(content: any, targetLang: string): Promise<TranslationResult> {
-        const batches = this.splitIntoBatches(content, this.batchSize);
+        const batchGenerator = this.splitIntoBatches(content, this.batchSize);
+        let batchIndex = 0;
         let totalTranslatedContent: any = {};
         let totalTokensUsed = { inputTokens: 0, outputTokens: 0 };
+        const running: Promise<void>[] = [];
 
-        for (let i = 0; i < batches.length; i++) {
-            this.outputChannel.appendLine(`Translating batch ${i + 1} of ${batches.length}...`);
-            const batchResult = await this.provider.translate(batches[i], targetLang);
-            
-            Object.assign(totalTranslatedContent, batchResult.translatedContent);
-            totalTokensUsed.inputTokens += batchResult.tokensUsed.inputTokens;
-            totalTokensUsed.outputTokens += batchResult.tokensUsed.outputTokens;
+        const processBatch = async (batch: any, index: number) => {
+            this.outputChannel.appendLine(`Translating batch ${index}...`);
+            const result = await this.provider.translate(batch, targetLang);
+            Object.assign(totalTranslatedContent, result.translatedContent);
+            totalTokensUsed.inputTokens += result.tokensUsed.inputTokens;
+            totalTokensUsed.outputTokens += result.tokensUsed.outputTokens;
+            this.outputChannel.appendLine(`Batch ${index} translated. Tokens used: Input: ${result.tokensUsed.inputTokens}, Output: ${result.tokensUsed.outputTokens}`);
+            if (result.tokensUsed.inputTokens + result.tokensUsed.outputTokens > this.batchTokenLimit) {
+                this.batchSize = Math.max(1, Math.floor(this.batchSize / 2));
+                this.outputChannel.appendLine(`Token usage high, reducing batch size to ${this.batchSize}`);
+            }
+        };
 
-            this.outputChannel.appendLine(`Batch ${i + 1} translated. Tokens used: Input: ${batchResult.tokensUsed.inputTokens}, Output: ${batchResult.tokensUsed.outputTokens}`);
+        for (const batch of batchGenerator) {
+            batchIndex++;
+            const p = processBatch(batch, batchIndex);
+            running.push(p);
+            if (running.length >= this.parallelBatchCount) {
+                await running.shift();
+            }
         }
 
+        await Promise.all(running);
         return { translatedContent: totalTranslatedContent, tokensUsed: totalTokensUsed };
     }
 
-    private splitIntoBatches(obj: any, batchSize: number): any[] {
-        const result: any[] = [];
+    private *splitIntoBatches(obj: any, batchSize: number): Generator<any> {
         let currentBatch: any = {};
         let currentSize = 0;
-
         for (const [key, value] of Object.entries(obj)) {
+            currentBatch[key] = value;
+            currentSize++;
             if (currentSize >= batchSize) {
-                result.push(currentBatch);
+                yield currentBatch;
                 currentBatch = {};
                 currentSize = 0;
             }
-            currentBatch[key] = value;
-            currentSize++;
         }
-
         if (currentSize > 0) {
-            result.push(currentBatch);
+            yield currentBatch;
         }
-
-        return result;
     }
 
     public async validateTranslation(originalContent: any, translatedContent: any, targetLang: string): Promise<ValidationResult> {
