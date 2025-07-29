@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as os from 'os';
 import { LLMService } from './llmService';
 import { Logger } from './logger';
 import { execSync } from 'child_process';
@@ -304,6 +305,16 @@ export class TranslationManager {
             this.outputChannel.appendLine('Translation validation passed.');
         }
     
+        // Preview diff and confirm
+        const confirmed = await this.previewChanges(targetFilePath, newContent, targetContent);
+        if (!confirmed) {
+            this.outputChannel.appendLine(`Changes for ${lang} were cancelled by user.`);
+            return {
+                inputTokens: tokensUsed.inputTokens + validationTokens.inputTokens,
+                outputTokens: tokensUsed.outputTokens + validationTokens.outputTokens
+            };
+        }
+
         // 将翻译后的内容写入目标语言文件
         fs.writeFileSync(targetFilePath, JSON.stringify(newContent, null, 2));
         this.outputChannel.appendLine(`Updated content written to ${targetFilePath}`);
@@ -458,6 +469,40 @@ export class TranslationManager {
         delete current[keys[keys.length - 1]];
     }
 
+    // Show diff view and ask user to confirm applying changes
+    private async previewChanges(targetFilePath: string, newContent: any, originalContent: any): Promise<boolean> {
+        const config = vscode.workspace.getConfiguration('i18nNexus');
+        const enableDiff = config.get<boolean>('enableDiffView', true);
+        if (!enableDiff) {
+            return true;
+        }
+
+        const tempNewPath = path.join(os.tmpdir(), `i18n-nexus-${Date.now()}-${path.basename(targetFilePath)}`);
+        fs.writeFileSync(tempNewPath, JSON.stringify(newContent, null, 2));
+
+        let oldUri: vscode.Uri;
+        let tempOldPath: string | undefined;
+        if (fs.existsSync(targetFilePath)) {
+            oldUri = vscode.Uri.file(targetFilePath);
+        } else {
+            tempOldPath = path.join(os.tmpdir(), `i18n-nexus-old-${Date.now()}-${path.basename(targetFilePath)}`);
+            fs.writeFileSync(tempOldPath, JSON.stringify(originalContent ?? {}, null, 2));
+            oldUri = vscode.Uri.file(tempOldPath);
+        }
+
+        const newUri = vscode.Uri.file(tempNewPath);
+        await vscode.commands.executeCommand('vscode.diff', oldUri, newUri, 'Preview Translation Changes');
+
+        const choice = await vscode.window.showQuickPick(['Apply Changes', 'Cancel'], { placeHolder: 'Apply translation changes?' });
+
+        fs.unlinkSync(tempNewPath);
+        if (tempOldPath) {
+            fs.unlinkSync(tempOldPath);
+        }
+
+        return choice === 'Apply Changes';
+    }
+
 
     // 翻译特定文件的方法
     // 修改 translateFile 方法
@@ -507,6 +552,12 @@ export class TranslationManager {
             const { translatedContent, tokensUsed } = await this.llmService.translate(toTranslate, lang);
 
             const newContent = this.mergeContents(baseContent, targetContent, translatedContent);
+
+            const confirmed = await this.previewChanges(targetFilePath, newContent, targetContent);
+            if (!confirmed) {
+                vscode.window.showInformationMessage(`${lang} 的翻译已取消`);
+                return;
+            }
 
             fs.writeFileSync(targetFilePath, JSON.stringify(newContent, null, 2));
             vscode.window.showInformationMessage(`${lang} 的翻译已完成`);
