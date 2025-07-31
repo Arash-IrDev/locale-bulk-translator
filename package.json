@@ -49,6 +49,14 @@
       {
         "command": "i18n-nexus.translateCurrentFile",
         "title": "i18n Nexus: Translate Current File"
+      },
+      {
+        "command": "i18n-nexus.openSettings",
+        "title": "i18n Nexus: Open Settings"
+      },
+      {
+        "command": "i18n-nexus.toggleDebugOutput",
+        "title": "i18n Nexus: Toggle Debug Output"
       }
     ],
     "keybindings": [
@@ -84,7 +92,7 @@
         },
         "i18nNexus.baseLanguage": {
           "type": "string",
-          "default": "zh-CN",
+          "default": "en",
           "enum": [
             "en",
             "zh-CN",
@@ -96,9 +104,10 @@
             "ko",
             "ar",
             "pt",
-            "ru"
+            "ru",
+            "fa"
           ],
-          "description": "Base language code (e.g., 'zh' for Chinese)"
+          "description": "Base language code (e.g., 'en' for English)"
         },
         "i18nNexus.targetLanguages": {
           "type": "object",
@@ -111,12 +120,12 @@
             "zh-CN": {
               "type": "boolean",
               "default": true,
-              "description": "🇨🇳 简体中文"
+              "description": "🇨🇳 Simplified Chinese"
             },
             "zh-TW": {
               "type": "boolean",
               "default": false,
-              "description": "🇹🇼 繁體中文"
+              "description": "🇹🇼 Traditional Chinese"
             },
             "es": {
               "type": "boolean",
@@ -136,7 +145,7 @@
             "ja": {
               "type": "boolean",
               "default": true,
-              "description": "🇯🇵 日本語"
+              "description": "🇯🇵 Japanese"
             },
             "ko": {
               "type": "boolean",
@@ -157,6 +166,11 @@
               "type": "boolean",
               "default": false,
               "description": "🇷🇺 Русский"
+            },
+            "fa": {
+              "type": "boolean",
+              "default": true,
+              "description": "🇮🇷 فارسی"
             }
           },
           "additionalProperties": false,
@@ -175,13 +189,13 @@
         },
         "i18nNexus.llmModel": {
           "type": "string",
-          "default": "gpt-3.5-turbo",
-          "description": "Specific model to use for the selected LLM provider"
+          "default": "gpt-4.1-mini",
+          "description": "Specific OpenAI model to use for translations (gpt-4.1-mini balances quality and cost)"
         },
         "i18nNexus.llmApiUrl": {
           "type": "string",
-          "default": "https://api.openai.com/v1/chat/completions",
-          "description": "API URL for the selected LLM provider"
+          "default": "https://api.openai.com/v1/responses",
+          "description": "API URL for the selected OpenAI model"
         },
         "i18nNexus.llmApiKey": {
           "type": "string",

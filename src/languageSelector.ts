@@ -9,16 +9,17 @@ interface LanguageItem extends vscode.QuickPickItem {
 export class LanguageSelector {
     private languageOptions: LanguageItem[] = [
         { label: "🇺🇸 English", code: "en", selected: false, description: "" },
-        { label: "🇨🇳 简体中文", code: "zh-CN", selected: false, description: "" },
-        { label: "🇹🇼 繁體中文", code: "zh-TW", selected: false, description: "" },
+        { label: "🇨🇳 Simplified Chinese", code: "zh-CN", selected: false, description: "" },
+        { label: "🇹🇼 Traditional Chinese", code: "zh-TW", selected: false, description: "" },
         { label: "🇪🇸 Español", code: "es", selected: false, description: "" },
         { label: "🇫🇷 Français", code: "fr", selected: false, description: "" },
         { label: "🇩🇪 Deutsch", code: "de", selected: false, description: "" },
-        { label: "🇯🇵 日本語", code: "ja", selected: false, description: "" },
+        { label: "🇯🇵 Japanese", code: "ja", selected: false, description: "" },
         { label: "🇰🇷 한국어", code: "ko", selected: false, description: "" },
         { label: "🇸🇦 العربية", code: "ar", selected: false, description: "" },
         { label: "🇵🇹 Português", code: "pt", selected: false, description: "" },
-        { label: "🇷🇺 Русский", code: "ru", selected: false, description: "" }
+        { label: "🇷🇺 Русский", code: "ru", selected: false, description: "" },
+        { label: "🇮🇷 فارسی", code: "fa", selected: false, description: "" }
     ];
 
     private logger: Logger;

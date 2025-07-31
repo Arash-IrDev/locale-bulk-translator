@@ -22,7 +22,8 @@ export class LLMService {
         this.batchSize = config.get('translationBatchSize', 1000);
         this.batchTokenLimit = config.get('batchTokenLimit', 8000);
         this.parallelBatchCount = Math.max(1, config.get('parallelBatchCount', 1));
-        this.initializeProvider();
+        // Don't initialize provider during construction to avoid API key validation errors
+        this.logger.log('LLMService initialized (provider will be initialized on first use)');
     }
 
     private initializeProvider() {
@@ -58,6 +59,11 @@ export class LLMService {
     public async translate(content: any, targetLang: string): Promise<TranslationResult> {
         this.logger.log(`Starting translation to ${targetLang}`);
         try {
+            // Initialize provider if not already initialized
+            if (!this.provider) {
+                this.initializeProvider();
+            }
+            
             const result = await this.translateInBatches(content, targetLang);
             this.logger.log(`Translation to ${targetLang} completed successfully`);
             this.logger.log(`Total tokens used: Input: ${result.tokensUsed.inputTokens}, Output: ${result.tokensUsed.outputTokens}`);
@@ -71,6 +77,11 @@ export class LLMService {
     }
 
     public async *translateGenerator(content: any, targetLang: string): AsyncGenerator<TranslationResult> {
+        // Initialize provider if not already initialized
+        if (!this.provider) {
+            this.initializeProvider();
+        }
+        
         const batchGen = this.splitIntoBatches(content, this.batchSize);
         let index = 0;
         for (const batch of batchGen) {
@@ -138,6 +149,11 @@ export class LLMService {
     public async validateTranslation(originalContent: any, translatedContent: any, targetLang: string): Promise<ValidationResult> {
         this.logger.log(`Starting translation validation for ${targetLang}`);
         try {
+            // Initialize provider if not already initialized
+            if (!this.provider) {
+                this.initializeProvider();
+            }
+            
             const result = await this.provider.validateTranslation(originalContent, translatedContent, targetLang);
             this.logger.log(`Translation validation for ${targetLang} completed`);
             this.logger.log(`Validation tokens used: Input: ${result.tokensUsed.inputTokens}, Output: ${result.tokensUsed.outputTokens}`);

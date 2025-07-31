@@ -7,7 +7,7 @@ export class ClaudeProvider implements ILLMProvider {
     private apiKey: string = '';
     private apiUrl: string = '';
     private logger!: Logger;
-    private model: string = 'claude-2'; // 默认模型
+    private model: string = 'claude-2'; // Default model
 
     initialize(config: vscode.WorkspaceConfiguration, logger: Logger): void {
         this.apiKey = config.get('llmApiKey') || '';

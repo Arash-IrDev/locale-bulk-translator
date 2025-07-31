@@ -11,11 +11,11 @@ interface TokenUsage {
     outputTokens: number;
 }
 
-// 定义差异结果接口
+// Define diff result interface
 interface DiffResult {
-    added: Record<string, any>; // 新增的键值对
-    modified: Record<string, any>; // 修改的键值对
-    deleted: string[]; // 删除的键
+    added: Record<string, any>; // Added key-value pairs
+    modified: Record<string, any>; // Modified key-value pairs
+    deleted: string[]; // Deleted keys
 }
 
 export class TranslationManager {
@@ -23,7 +23,7 @@ export class TranslationManager {
     private logger: Logger;
     private outputChannel: vscode.OutputChannel;
     private totalTokens: TokenUsage = { inputTokens: 0, outputTokens: 0 };
-    private pauseBetweenLanguages: number = 1000; // 默认每种语言翻译之间暂停 1 秒
+    private pauseBetweenLanguages: number = 1000; // Default pause of 1 second between language translations
 
     constructor(logger: Logger, channel: vscode.OutputChannel) {
         this.llmService = new LLMService(logger, channel);
@@ -33,26 +33,26 @@ export class TranslationManager {
         this.outputChannel.appendLine('i18n Nexus Translation Manager initialized');
     }
 
-    // 翻译主函数
+    // Main translation function
     public async translate() {
         this.logger.log('translate method called');
         this.outputChannel.appendLine('Starting translation process...');
         this.totalTokens = { inputTokens: 0, outputTokens: 0 };
 
-        // 获取配置
+        // Get configuration
         const config = vscode.workspace.getConfiguration('i18nNexus');
-        const basePath = config.get<string>('basePath'); // 翻译文件路径
-        const baseLanguage = config.get<string>('baseLanguage'); // 基准语言
-        const targetLanguagesConfig = config.get<Record<string, boolean>>('targetLanguages'); // 目标语言配置
-        const llmModel = config.get<string>('llmModel') || 'default'; // LLM 模型
-        const providerName = config.get('llmProvider') || 'openai'; // LLM 提供商
+        const basePath = config.get<string>('basePath'); // Translation file path
+        const baseLanguage = config.get<string>('baseLanguage'); // Base language
+        const targetLanguagesConfig = config.get<Record<string, boolean>>('targetLanguages'); // Target language configuration
+        const llmModel = config.get<string>('llmModel') || 'default'; // LLM model
+        const providerName = config.get('llmProvider') || 'openai'; // LLM provider
 
-        // 验证配置
+        // Validate configuration
         if (!this.validateConfig(basePath, baseLanguage, targetLanguagesConfig)) {
             return;
         }
 
-        // 确保 baseLanguage 不是 undefined
+        // Ensure baseLanguage is not undefined
         if (!baseLanguage) {
             this.logger.error('Base language is not defined');
             this.outputChannel.appendLine('Error: Base language is not defined');
@@ -60,18 +60,18 @@ export class TranslationManager {
             return;
         }
 
-        // 获取启用的目标语言
+        // Get enabled target languages
         const targetLanguages = Object.entries(targetLanguagesConfig!)
             .filter(([_, isEnabled]) => isEnabled)
             .map(([lang, _]) => lang);
 
-        // 输出翻译信息
+        // Output translation information
         this.outputChannel.appendLine(`Base Language: ${baseLanguage}`);
         this.outputChannel.appendLine(`Target Languages: ${targetLanguages.join(', ')}`);
         this.outputChannel.appendLine(`LLM provider: ${providerName}`);
         this.outputChannel.appendLine(`LLM Model: ${llmModel}`);
 
-        // 获取工作区文件夹
+        // Get workspace folders
         const workspaceFolders = vscode.workspace.workspaceFolders;
         if (!workspaceFolders || workspaceFolders.length === 0) {
             this.logger.error('No workspace folder found');
@@ -80,11 +80,11 @@ export class TranslationManager {
             return;
         }
 
-        // 获取翻译文件路径
+        // Get translation file path
         const messagesPath = path.join(workspaceFolders[0].uri.fsPath, basePath!);
-        const baseFilePath = path.join(messagesPath, `${baseLanguage}.json`); // 基准语言文件路径
+        const baseFilePath = path.join(messagesPath, `${baseLanguage}.json`); // Base language file path
 
-        // 检查基准语言文件是否存在
+        // Check if base language file exists
         if (!fs.existsSync(baseFilePath)) {
             this.logger.error(`Base language file ${baseLanguage}.json not found`);
             this.outputChannel.appendLine(`Error: Base language file ${baseLanguage}.json not found`);
@@ -92,7 +92,7 @@ export class TranslationManager {
             return;
         }
 
-        // 读取基准语言文件内容
+        // Read base language file content
         let baseContent: any;
         try {
             baseContent = JSON.parse(fs.readFileSync(baseFilePath, 'utf8'));
@@ -104,19 +104,19 @@ export class TranslationManager {
             return;
         }
 
-        // 遍历目标语言进行翻译
+        // Iterate through target languages for translation
         for (const lang of targetLanguages) {
             if (lang !== baseLanguage) {
                 this.outputChannel.appendLine(`\nTranslating to ${lang}...`);
                 this.outputChannel.appendLine(`Base Language: ${baseLanguage}, Target Language: ${lang}, LLM provider: ${providerName}, LLM Model: ${llmModel}`);
                 try {
-                    // 翻译单个语言
+                    // Translate single language
                     const tokensUsed = await this.translateLanguage(messagesPath, lang, baseContent, baseLanguage);
                     this.totalTokens.inputTokens += tokensUsed.inputTokens;
                     this.totalTokens.outputTokens += tokensUsed.outputTokens;
                     this.outputChannel.appendLine(`Tokens used for ${lang}: Input: ${tokensUsed.inputTokens}, Output: ${tokensUsed.outputTokens}`);
 
-                    // 在每种语言之间添加暂停
+                    // Add pause between languages
                     if (this.pauseBetweenLanguages > 0) {
                         this.outputChannel.appendLine(`Pausing for ${this.pauseBetweenLanguages}ms before next language...`);
                         await this.pause(this.pauseBetweenLanguages);
@@ -134,12 +134,12 @@ export class TranslationManager {
         vscode.window.showInformationMessage(`Translation completed. Total tokens used: Input: ${this.totalTokens.inputTokens}, Output: ${this.totalTokens.outputTokens}`);
     }
 
-    // 暂停函数
+    // Pause function
     private pause(ms: number): Promise<void> {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
-    // 验证配置函数
+    // Validate configuration function
     private validateConfig(basePath?: string, baseLanguage?: string, targetLanguagesConfig?: Record<string, boolean>): boolean {
         if (!basePath || typeof basePath !== 'string') {
             this.logger.error('Invalid or missing basePath configuration');
@@ -173,32 +173,32 @@ export class TranslationManager {
         return true;
     }
 
-    // 获取基准语言文件的变更
+    // Get changes in base language file
     private getBaseChanges(messagesPath: string, baseLanguage: string): Record<string, any> {
         const baseFilePath = path.join(messagesPath, `${baseLanguage}.json`);
         const changes: Record<string, any> = {};
 
         try {
-            // 首先检查是否在 Git 仓库中
+            // First check if it's in a Git repository
             const isGitRepo = this.isGitRepository(messagesPath);
             if (!isGitRepo) {
                 this.logger.warn('Not a Git repository. Skipping base changes detection.');
                 return changes;
             }
 
-            // 使用相对路径
+            // Use relative path
             const relativeFilePath = path.relative(process.cwd(), baseFilePath);
 
-            // 执行 Git 命令获取差异
+            // Execute Git command to get differences
             const gitDiff = execSync(`git diff HEAD~1 HEAD -- "${relativeFilePath}"`, {
                 encoding: 'utf-8',
-                cwd: messagesPath // 设置工作目录为 messagesPath
+                cwd: messagesPath // Set working directory to messagesPath
             });
 
             const lines = gitDiff.split('\n');
             let currentKey = '';
 
-            // 解析 Git 差异
+            // Parse Git differences
             for (const line of lines) {
                 if (line.startsWith('+') && line.includes(':')) {
                     const [key, value] = line.substring(1).split(':').map(s => s.trim());
@@ -211,25 +211,25 @@ export class TranslationManager {
                 }
             }
 
-            // 解析可能为 JSON 格式的字符串值
+            // Parse string values that might be JSON
             for (const key in changes) {
                 if (typeof changes[key] === 'string') {
                     try {
                         changes[key] = JSON.parse(changes[key]);
                     } catch (e) {
-                        // 如果不是有效的 JSON，则保留为字符串
+                        // If not valid JSON, keep as string
                     }
                 }
             }
         } catch (error) {
             this.logger.error(`Error getting base changes: ${error}`);
-            // 如果出错，返回空的 changes 对象，而不是抛出异常
+            // If an error occurs, return an empty changes object instead of throwing an exception
         }
 
         return changes;
     }
 
-    // 检查是否为 Git 仓库
+    // Check if it's a Git repository
     private isGitRepository(directory: string): boolean {
         try {
             execSync('git rev-parse --is-inside-work-tree', {
@@ -242,7 +242,7 @@ export class TranslationManager {
         }
     }
 
-    // 翻译单个语言
+    // Translate single language
     private async translateLanguage(messagesPath: string, lang: string, baseContent: any, baseLanguage: string): Promise<TokenUsage> {
         this.logger.log(`translateLanguage method called for ${lang}`);
         this.outputChannel.appendLine(`Processing ${lang}...`);
@@ -251,7 +251,7 @@ export class TranslationManager {
         let targetContent = {};
         let originalBaseContent = {};
     
-        // 加载目标语言文件
+        // Load target language file
         if (fs.existsSync(targetFilePath)) {
             targetContent = JSON.parse(fs.readFileSync(targetFilePath, 'utf8'));
             this.outputChannel.appendLine(`Existing content loaded for ${lang}`);
@@ -259,17 +259,17 @@ export class TranslationManager {
             this.outputChannel.appendLine(`No existing content found for ${lang}, starting fresh`);
         }
     
-        // 加载原始基准语言文件
+        // Load original base language file
         const originalBaseFilePath = path.join(messagesPath, `${baseLanguage}.json.original`);
         if (fs.existsSync(originalBaseFilePath)) {
             originalBaseContent = JSON.parse(fs.readFileSync(originalBaseFilePath, 'utf8'));
         } else {
-            // 如果原始文件不存在，则使用当前基准文件作为原始文件
+            // If original file does not exist, use current base file as original
             originalBaseContent = baseContent;
             fs.writeFileSync(originalBaseFilePath, JSON.stringify(baseContent, null, 2));
         }
     
-        // 获取差异，包括原始基准内容
+        // Get differences, including original base content
         const diff = this.getDiff(baseContent, targetContent, originalBaseContent);
         const baseChanges = this.getBaseChanges(messagesPath, baseLanguage);
     
@@ -294,7 +294,7 @@ export class TranslationManager {
 
         newContent = this.mergeContents(newContent, {}, diff.deleted);
     
-        // 验证翻译结果
+        // Validate translation result
         this.outputChannel.appendLine('Validating translation...');
         const { isValid, tokensUsed: validationTokens } = await this.llmService.validateTranslation(baseContent, newContent, lang);
         if (!isValid) {
@@ -315,11 +315,11 @@ export class TranslationManager {
             };
         }
 
-        // 将翻译后的内容写入目标语言文件
+        // Write translated content to target language file
         fs.writeFileSync(targetFilePath, JSON.stringify(newContent, null, 2));
         this.outputChannel.appendLine(`Updated content written to ${targetFilePath}`);
     
-        // 更新原始基准文件
+        // Update original base file
         fs.writeFileSync(originalBaseFilePath, JSON.stringify(baseContent, null, 2));
     
         return {
@@ -328,13 +328,13 @@ export class TranslationManager {
         };
     }
 
-    // 获取两个 JSON 对象的差异
+    // Get difference between two JSON objects
     private getDiff(baseContent: any, targetContent: any, originalBaseContent: any): DiffResult {
         const added: Record<string, any> = {};
         const modified: Record<string, any> = {};
         const deleted: string[] = [];
     
-        // 递归比较
+        // Recursive comparison
         this.diffRecursive(baseContent, targetContent, originalBaseContent, added, modified, deleted);
     
         this.logger.log(`Diff result: added=${Object.keys(added).length}, modified=${Object.keys(modified).length}, deleted=${deleted.length}`);
@@ -342,17 +342,17 @@ export class TranslationManager {
     }
     
     private diffRecursive(base: any, target: any, originalBase: any, added: Record<string, any>, modified: Record<string, any>, deleted: string[], path: string = '') {
-        // 遍历基准对象
+        // Iterate through base object
         for (const key in base) {
             const newPath = path ? `${path}.${key}` : key;
             if (!(key in target)) {
-                // 如果目标对象中不存在该键，则添加到 added
+                // If key does not exist in target, add to added
                 added[newPath] = base[key];
             } else if (typeof base[key] === 'object' && base[key] !== null) {
-                // 如果是对象，则递归比较
+                // If it's an object, recursively compare
                 this.diffRecursive(base[key], target[key], originalBase ? originalBase[key] : undefined, added, modified, deleted, newPath);
             } else if (base[key] !== target[key]) {
-                // 只有当基准语言的值改变时，才标记为需要修改
+                // Only mark as modified if the value in the base language changes
                 const originalValue = this.getNestedValue(originalBase, newPath);
                 if (base[key] !== originalValue) {
                     modified[newPath] = base[key];
@@ -360,39 +360,39 @@ export class TranslationManager {
             }
         }
     
-        // 遍历目标对象
+        // Iterate through target object
         for (const key in target) {
             const newPath = path ? `${path}.${key}` : key;
-            // 如果基准对象中不存在该键，则添加到 deleted
+            // If key does not exist in base, add to deleted
             if (!(key in base)) {
                 deleted.push(newPath);
             }
         }
     }
 
-    // 获取原始基础内容
-    // 从 Git 获取原始基础内容
+    // Get original base content
+    // Get original base content from Git
     private getOriginalBaseContent(filePath: string): any {
         try {
-            // 获取文件的上一个版本内容
+            // Get content of the previous version
             const gitCommand = `git show HEAD~1:"${path.relative(process.cwd(), filePath)}"`;
             const output = execSync(gitCommand, { encoding: 'utf-8' });
             return JSON.parse(output);
         } catch (error) {
-            this.logger.warn(`无法从 Git 获取原始内容: ${error}`);
-            // 如果无法获取 Git 历史，则返回当前文件内容
+            this.logger.warn(`Could not get original content from Git: ${error}`);
+            // If Git history cannot be retrieved, return current file content
             return this.loadJsonFile(filePath);
         }
     }
 
-    // 准备翻译内容
+    // Prepare translation content
     private prepareTranslationContent(baseContent: any, targetContent: any, originalBaseContent: any): any {
         const toTranslate: any = {};
         this.deepCompare(baseContent, targetContent, originalBaseContent, toTranslate);
         return toTranslate;
     }
 
-    // 深度比较并准备翻译内容
+    // Deep compare and prepare translation content
     private deepCompare(base: any, target: any, original: any, result: any, currentPath: string = '') {
         for (const key in base) {
             const newPath = currentPath ? `${currentPath}.${key}` : key;
@@ -413,22 +413,22 @@ export class TranslationManager {
             }
         }
 
-        // 移除目标中多余的键
+        // Remove extra keys from target
         for (const key in target) {
             const newPath = currentPath ? `${currentPath}.${key}` : key;
             if (!(key in base)) {
-                result[newPath] = null;  // 标记为删除
+                result[newPath] = null;  // Mark for deletion
             }
         }
     }
     
-    // 辅助方法：获取嵌套对象的值
-    // 获取嵌套对象的值
+    // Helper method: Get nested object value
+    // Get nested object value
     private getNestedValue(obj: any, path: string): any {
         return path.split('.').reduce((o, i) => o ? o[i] : undefined, obj);
     }
 
-    // 合并翻译后的内容和目标语言文件内容
+    // Merge translated content and target language file content
     private mergeContents(baseContent: any, targetContent: any, translatedContent: any): any {
         const merged = JSON.parse(JSON.stringify(baseContent));
 
@@ -443,7 +443,7 @@ export class TranslationManager {
         return merged;
     }
 
-    // 设置嵌套属性值
+    // Set nested property value
     private setNestedProperty(obj: any, path: string, value: any) {
         const keys = path.split('.');
         let current = obj;
@@ -456,7 +456,7 @@ export class TranslationManager {
         current[keys[keys.length - 1]] = value;
     }
 
-    // 删除嵌套属性
+    // Delete nested property
     private deleteNestedProperty(obj: any, path: string) {
         const keys = path.split('.');
         let current = obj;
@@ -504,18 +504,18 @@ export class TranslationManager {
     }
 
 
-    // 翻译特定文件的方法
-    // 修改 translateFile 方法
+    // Method to translate specific files
+    // Modify translateFile method
     public async translateFile(fileUri: vscode.Uri) {
         const filePath = fileUri.fsPath;
-        this.logger.log(`正在翻译文件: ${filePath}`);
+        this.logger.log(`Translating file: ${filePath}`);
 
         const config = vscode.workspace.getConfiguration('i18nNexus');
         const basePath = config.get<string>('basePath');
         const baseLanguage = config.get<string>('baseLanguage');
 
         if (!basePath || !baseLanguage) {
-            vscode.window.showErrorMessage('基础路径或基础语言未配置。');
+            vscode.window.showErrorMessage('Base path or base language not configured.');
             return;
         }
 
@@ -525,7 +525,7 @@ export class TranslationManager {
         const lang = path.parse(fileName).name;
 
         if (lang === baseLanguage) {
-            vscode.window.showInformationMessage('这是基础语言文件，无需翻译。');
+            vscode.window.showInformationMessage('This is the base language file, no translation needed.');
             return;
         }
 
@@ -533,7 +533,7 @@ export class TranslationManager {
         const targetFilePath = filePath;
 
         if (!fs.existsSync(baseFilePath)) {
-            vscode.window.showErrorMessage(`找不到基础语言文件: ${baseFilePath}`);
+            vscode.window.showErrorMessage(`Base language file not found: ${baseFilePath}`);
             return;
         }
 
@@ -545,7 +545,7 @@ export class TranslationManager {
             const toTranslate = this.prepareTranslationContent(baseContent, targetContent, originalBaseContent);
 
             if (Object.keys(toTranslate).length === 0) {
-                vscode.window.showInformationMessage('未检测到变化，无需翻译。');
+                vscode.window.showInformationMessage('No changes detected, no translation needed.');
                 return;
             }
 
@@ -555,30 +555,30 @@ export class TranslationManager {
 
             const confirmed = await this.previewChanges(targetFilePath, newContent, targetContent);
             if (!confirmed) {
-                vscode.window.showInformationMessage(`${lang} 的翻译已取消`);
+                vscode.window.showInformationMessage(`Translation for ${lang} cancelled`);
                 return;
             }
 
             fs.writeFileSync(targetFilePath, JSON.stringify(newContent, null, 2));
-            vscode.window.showInformationMessage(`${lang} 的翻译已完成`);
+            vscode.window.showInformationMessage(`Translation for ${lang} completed`);
 
             this.totalTokens.inputTokens += tokensUsed.inputTokens;
             this.totalTokens.outputTokens += tokensUsed.outputTokens;
         } catch (error) {
-            this.logger.error(`翻译过程中出错: ${error}`);
-            vscode.window.showErrorMessage(`翻译失败: ${error}`);
+            this.logger.error(`Error during translation: ${error}`);
+            vscode.window.showErrorMessage(`Translation failed: ${error}`);
         }
     }
 
     
    
 
-    // 加载JSON文件的方法
+    // Method to load JSON files
     private loadJsonFile(filePath: string): any {
         try {
             return JSON.parse(fs.readFileSync(filePath, 'utf8'));
         } catch (error) {
-            this.logger.error(`加载 JSON 文件出错: ${filePath}`);
+            this.logger.error(`Error loading JSON file: ${filePath}`);
             throw error;
         }
     }

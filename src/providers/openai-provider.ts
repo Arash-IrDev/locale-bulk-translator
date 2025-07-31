@@ -26,7 +26,7 @@ export class OpenAIProvider implements ILLMProvider {
             this.logger.log(`Using custom API URL: ${apiUrl}`);
         }
         //this.logger = logger;
-        // 添加安全检查
+        // Add security check
         
         this.logger.log('OpenAIProvider initialized');
     }

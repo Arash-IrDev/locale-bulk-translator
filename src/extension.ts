@@ -1,22 +1,29 @@
-// vscode 模块包含 VS Code 可扩展性 API
-// 导入模块并在下面的代码中使用别名 vscode 引用它
+// The vscode module contains the VS Code extensibility API
+// Import the module and reference it with the alias vscode in the code below
 import * as vscode from 'vscode';
 import { TranslationManager } from './translationManager';
 import { LanguageSelector } from './languageSelector';
 import { ModelConfigurator } from './modelConfigurator';
 import { Logger } from './logger';
-// 当扩展首次激活时调用此方法
+// This method is called when the extension is activated for the first time
 export function activate(context: vscode.ExtensionContext) {
     const channel = vscode.window.createOutputChannel('i18n Nexus');
     const logger = new Logger(channel);
     logger.log('i18n Nexus activation started');
 
-
-    const translationManager = new TranslationManager(logger, channel);
-    const modelConfigurator = new ModelConfigurator(logger, channel);
-
-
-    logger.log('All managers initialized');
+    // Initialize managers without API key validation during activation
+    let translationManager: TranslationManager | undefined;
+    let modelConfigurator: ModelConfigurator | undefined;
+    
+    try {
+        translationManager = new TranslationManager(logger, channel);
+        modelConfigurator = new ModelConfigurator(logger, channel);
+        logger.log('All managers initialized');
+    } catch (error) {
+        logger.error('Failed to initialize managers:', error);
+        // Don't throw error during activation, just log it
+        vscode.window.showWarningMessage('i18n Nexus activated with limited functionality. Please configure your API key to use translation features.');
+    }
 
     const showConfigDisposable = vscode.commands.registerCommand('i18n-nexus.showConfig', () => {
         const config = vscode.workspace.getConfiguration('i18nNexus');
@@ -25,53 +32,61 @@ export function activate(context: vscode.ExtensionContext) {
             baseLanguage: config.get('baseLanguage'),
             targetLanguages: config.get('targetLanguages'),
             llmProvider: config.get('llmProvider'),
-            llmApiKey: '******', // 为了安全，不显示实际的 API 密钥
+            llmApiKey: '******', // For security, don't display the actual API key
             llmApiUrl: config.get('llmApiUrl'),
-            // 添加其他配置项...
+            // Add other configuration items...
         };
 
         const configJson = JSON.stringify(configObject, null, 2);
 
-        // 创建并显示输出通道
+        // Create and display output channel
         // const channel = vscode.window.createOutputChannel('i18n Nexus Configuration');
         channel.appendLine('Current i18n Nexus Configuration:');
         channel.appendLine(configJson);
         channel.show();
 
-        // 同时在信息提示中显示简略信息
+        // Also display brief information in the information prompt
         logger.toggleDebugOutput();
         vscode.window.showInformationMessage(`${logger.isDebugEnabled() ? 'd-' : ''}i18n Nexus configuration has been output to the "i18n Nexus Configuration" channel.`);
     });
 
     context.subscriptions.push(showConfigDisposable);
 
-    // 注册翻译命令
+    // Register translation command
     let translateDisposable = vscode.commands.registerCommand('i18n-nexus.translateFiles', () => {
-        console.log('翻译命令被触发');
+        console.log('Translation command triggered');
+        if (!translationManager) {
+            vscode.window.showErrorMessage('Translation manager not initialized. Please check your configuration.');
+            return;
+        }
         try {
             translationManager.translate().catch(error => {
-                console.error('翻译过程中发生错误:', error);
-                vscode.window.showErrorMessage(`翻译失败: ${error.message}`);
+                console.error('Error occurred during translation:', error);
+                vscode.window.showErrorMessage(`Translation failed: ${error.message}`);
             });
-            console.log('翻译操作完成');
+            console.log('Translation operation completed');
         } catch (error) {
-            console.error('翻译过程中发生错误:', error);
+            console.error('Error occurred during translation:', error);
             if (error instanceof Error) {
-                vscode.window.showErrorMessage(`翻译失败: ${error.message}`);
+                vscode.window.showErrorMessage(`Translation failed: ${error.message}`);
             } else {
-                vscode.window.showErrorMessage('翻译过程中发生未知错误');
+                vscode.window.showErrorMessage('Unknown error occurred during translation');
             }
         }
     });
 
-    // 注册配置模型命令
+    // Register configure model command
     let configureModelDisposable = vscode.commands.registerCommand('i18n-nexus.configureModel', () => {
         logger.log('Configure model command triggered');
+        if (!modelConfigurator) {
+            vscode.window.showErrorMessage('Model configurator not initialized. Please check your configuration.');
+            return;
+        }
         modelConfigurator.configureModel();
     });
     logger.log('Configure model command registered');
 
-    // 注册切换调试输出命令
+    // Register toggle debug output command
     let toggleDebugOutputDisposable = vscode.commands.registerCommand('i18n-nexus.toggleDebugOutput', () => {
         logger.toggleDebugOutput();
         vscode.window.showInformationMessage(`Debug output ${logger.isDebugEnabled() ? 'enabled' : 'disabled'}`);
@@ -85,11 +100,15 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
 
-    // 在 extension.ts 文件中添加以下代码
+    // Add the following code in the extension.ts file
 
-    // 注册翻译当前文件命令
+    // Register translate current file command
     let translateCurrentFileDisposable = vscode.commands.registerCommand('i18n-nexus.translateCurrentFile', () => {
         logger.log('Translate current file command triggered');
+        if (!translationManager) {
+            vscode.window.showErrorMessage('Translation manager not initialized. Please check your configuration.');
+            return;
+        }
         const activeEditor = vscode.window.activeTextEditor;
         if (activeEditor) {
             translationManager.translateFile(activeEditor.document.uri);
@@ -99,13 +118,13 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
 
-    // 注册打开设置命令
+    // Register open settings command
     let openSettingsDisposable = vscode.commands.registerCommand('i18n-nexus.openSettings', () => {
         logger.log('Open settings command triggered');
         vscode.commands.executeCommand('workbench.action.openSettings', 'i18nNexus');
     });
 
-    // 将新注册的命令添加到 context.subscriptions
+    // Add newly registered commands to context.subscriptions
     context.subscriptions.push(
         translateCurrentFileDisposable,
         openSettingsDisposable
@@ -116,7 +135,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.window.showInformationMessage('i18n Nexus has been successfully activated');
 }
 
-// 当扩展被停用时调用此函数
+// This function is called when the extension is deactivated
 export function deactivate() {
     console.log('i18n Nexus is being deactivated');
 }

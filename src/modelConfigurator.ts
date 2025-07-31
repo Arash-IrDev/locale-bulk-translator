@@ -12,7 +12,7 @@ export class ModelConfigurator {
         this.logger.log('ModelConfigurator initialized');
     }
 
-    // 配置AI模型
+    // Configure AI model
     public async configureModel() {
         this.logger.log('configureModel method called');
 
@@ -20,7 +20,7 @@ export class ModelConfigurator {
         const currentProvider = config.get('llmProvider') as string;
         const currentModel = config.get('llmModel') as string;
 
-        // 准备LLM提供商选项
+        // Prepare LLM provider options
         const providerOptions: vscode.QuickPickItem[] = [
             'openai', 'gemini', 'claude',"openai-compatible"
         ].map(provider => ({
@@ -30,7 +30,7 @@ export class ModelConfigurator {
 
         this.logger.log(`Current provider: ${currentProvider}, Current model: ${currentModel}`);
 
-        // 选择LLM提供商
+        // Select LLM provider
         const selectedProvider = await vscode.window.showQuickPick(providerOptions, {
             placeHolder: 'Select LLM provider'
         });
@@ -39,11 +39,11 @@ export class ModelConfigurator {
             const provider = selectedProvider.label;
             this.logger.log(`Selected provider: ${provider}`);
 
-            // 更新LLM提供商
+            // Update LLM provider
             await config.update('llmProvider', provider, vscode.ConfigurationTarget.Global);
             this.logger.log(`Updated llmProvider to: ${provider}`);
 
-            // 输入模型名称
+            // Input model name
             const model = await vscode.window.showInputBox({
                 prompt: `Enter the model name for ${provider}`,
                 value: currentModel
@@ -54,7 +54,7 @@ export class ModelConfigurator {
                 this.logger.log(`Updated llmModel to: ${model}`);
             }
 
-            // 输入API URL
+            // Input API URL
             const apiUrl = await vscode.window.showInputBox({
                 prompt: `Enter the API URL for ${provider}`,
                 value: config.get('llmApiUrl') as string
@@ -65,7 +65,7 @@ export class ModelConfigurator {
                 this.logger.log(`Updated llmApiUrl to: ${apiUrl}`);
             }
 
-            // 输入API Key
+            // Input API Key
             const apiKey = await vscode.window.showInputBox({
                 prompt: `Enter the API Key for ${provider}`,
                 value: config.get('llmApiKey') as string,

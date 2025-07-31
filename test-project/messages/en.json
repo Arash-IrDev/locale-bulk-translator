@@ -3,38 +3,33 @@
     "welcome": "Welcome to our application",
     "loading": "Loading...",
     "error": "An error occurred",
-    "success": "Operation successful",
+    "success": "Operation completed successfully",
     "cancel": "Cancel",
-    "confirm": "Confirm",
     "save": "Save",
     "delete": "Delete",
     "edit": "Edit",
-    "add": "Add"
+    "add": "Add",
+    "search": "Search"
   },
   "navigation": {
     "home": "Home",
-    "about": "About Us",
-    "contact": "Contact Us",
     "settings": "Settings",
-    "profile": "Profile"
+    "profile": "Profile",
+    "logout": "Logout"
   },
   "forms": {
-    "email": "Email Address",
+    "email": "Email address",
     "password": "Password",
-    "username": "Username",
-    "firstName": "First Name",
-    "lastName": "Last Name",
-    "phone": "Phone Number",
-    "address": "Address",
-    "city": "City",
-    "country": "Country"
+    "confirmPassword": "Confirm password",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "phone": "Phone number",
+    "address": "Address"
   },
-  "messages": {
-    "loginSuccess": "Login successful!",
-    "loginFailed": "Login failed, please check your credentials",
-    "registrationSuccess": "Registration successful!",
-    "passwordReset": "Password reset link sent to your email",
-    "profileUpdated": "Profile updated",
-    "dataSaved": "Data saved"
+  "validation": {
+    "required": "This field is required",
+    "invalidEmail": "Please enter a valid email address",
+    "passwordMismatch": "Passwords do not match",
+    "minLength": "Minimum length is {min} characters"
   }
 } 
