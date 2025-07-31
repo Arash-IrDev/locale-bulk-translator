@@ -10,5 +10,11 @@
     "edit": "Edit",
     "add": "Add",
     "search": "Search"
+  },
+  "validation": {
+    "required": "این فیلد الزامی است",
+    "invalidEmail": "لطفاً یک آدرس ایمیل معتبر وارد کنید",
+    "passwordMismatch": "رمزهای عبور مطابقت ندارند",
+    "minLength": "حداقل طول {min} کاراکتر است"
   }
 }

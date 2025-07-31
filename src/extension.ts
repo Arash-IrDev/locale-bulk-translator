@@ -3,6 +3,7 @@
 import * as vscode from 'vscode';
 import { TranslationManager } from './translationManager';
 import { ChunkedTranslationManager } from './chunkedTranslationManager';
+import { StreamingTranslationManager } from './streamingTranslationManager';
 import { LanguageSelector } from './languageSelector';
 import { ModelConfigurator } from './modelConfigurator';
 import { Logger } from './logger';
@@ -12,14 +13,23 @@ export function activate(context: vscode.ExtensionContext) {
     const logger = new Logger(channel);
     logger.log('i18n Nexus activation started');
 
+    // Helper function to validate translation file
+    function isValidTranslationFile(filePath: string): boolean {
+        return !filePath.includes('extension-output') && 
+               !filePath.includes('i18n Nexus') && 
+               filePath.endsWith('.json');
+    }
+
     // Initialize managers without API key validation during activation
     let translationManager: TranslationManager | undefined;
     let chunkedTranslationManager: ChunkedTranslationManager | undefined;
+    let streamingTranslationManager: StreamingTranslationManager | undefined;
     let modelConfigurator: ModelConfigurator | undefined;
     
     try {
         translationManager = new TranslationManager(logger, channel);
         chunkedTranslationManager = new ChunkedTranslationManager(logger, channel);
+        streamingTranslationManager = new StreamingTranslationManager(logger, channel);
         modelConfigurator = new ModelConfigurator(logger, channel);
         logger.log('All managers initialized');
     } catch (error) {
@@ -114,6 +124,11 @@ export function activate(context: vscode.ExtensionContext) {
         }
         const activeEditor = vscode.window.activeTextEditor;
         if (activeEditor) {
+            const filePath = activeEditor.document.uri.fsPath;
+            if (!isValidTranslationFile(filePath)) {
+                vscode.window.showErrorMessage('Please select a valid translation JSON file. Output channels and non-JSON files cannot be translated.');
+                return;
+            }
             translationManager.translateFile(activeEditor.document.uri);
         } else {
             vscode.window.showErrorMessage('No active file to translate');
@@ -129,7 +144,32 @@ export function activate(context: vscode.ExtensionContext) {
         }
         const activeEditor = vscode.window.activeTextEditor;
         if (activeEditor) {
+            const filePath = activeEditor.document.uri.fsPath;
+            if (!isValidTranslationFile(filePath)) {
+                vscode.window.showErrorMessage('Please select a valid translation JSON file. Output channels and non-JSON files cannot be translated.');
+                return;
+            }
             chunkedTranslationManager.translateLargeFile(activeEditor.document.uri);
+        } else {
+            vscode.window.showErrorMessage('No active file to translate');
+        }
+    });
+
+    // Register streaming translation command
+    let streamingTranslationDisposable = vscode.commands.registerCommand('i18n-nexus.streamingTranslation', () => {
+        logger.log('Streaming translation command triggered');
+        if (!streamingTranslationManager) {
+            vscode.window.showErrorMessage('Streaming translation manager not initialized. Please check your configuration.');
+            return;
+        }
+        const activeEditor = vscode.window.activeTextEditor;
+        if (activeEditor) {
+            const filePath = activeEditor.document.uri.fsPath;
+            if (!isValidTranslationFile(filePath)) {
+                vscode.window.showErrorMessage('Please select a valid translation JSON file. Output channels and non-JSON files cannot be translated.');
+                return;
+            }
+            streamingTranslationManager.translateLargeFileStreaming(activeEditor.document.uri);
         } else {
             vscode.window.showErrorMessage('No active file to translate');
         }
@@ -138,11 +178,38 @@ export function activate(context: vscode.ExtensionContext) {
     // Register cancel translation command
     let cancelTranslationDisposable = vscode.commands.registerCommand('i18n-nexus.cancelTranslation', () => {
         logger.log('Cancel translation command triggered');
+        let cancelled = false;
+        
         if (chunkedTranslationManager && chunkedTranslationManager.isActive()) {
             chunkedTranslationManager.cancelTranslation();
+            cancelled = true;
+        }
+        
+        if (streamingTranslationManager && streamingTranslationManager.isActive()) {
+            streamingTranslationManager.cancelTranslation();
+            cancelled = true;
+        }
+        
+        if (cancelled) {
             vscode.window.showInformationMessage('Translation cancelled');
         } else {
             vscode.window.showInformationMessage('No active translation to cancel');
+        }
+    });
+
+    // Register Accept All Changes command
+    let acceptAllChangesDisposable = vscode.commands.registerCommand('i18n-nexus.acceptAllChanges', () => {
+        logger.log('Accept all changes command triggered');
+        if (streamingTranslationManager) {
+            streamingTranslationManager.acceptAllChanges();
+        }
+    });
+
+    // Register Reject All Changes command
+    let rejectAllChangesDisposable = vscode.commands.registerCommand('i18n-nexus.rejectAllChanges', () => {
+        logger.log('Reject all changes command triggered');
+        if (streamingTranslationManager) {
+            streamingTranslationManager.rejectAllChanges();
         }
     });
 
@@ -157,7 +224,10 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         translateCurrentFileDisposable,
         translateLargeFileDisposable,
+        streamingTranslationDisposable,
         cancelTranslationDisposable,
+        acceptAllChangesDisposable,
+        rejectAllChangesDisposable,
         openSettingsDisposable
     );
 

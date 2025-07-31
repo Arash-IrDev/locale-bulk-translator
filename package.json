@@ -63,6 +63,10 @@
         "title": "i18n Nexus: Translate Large File (Chunked)"
       },
       {
+        "command": "i18n-nexus.streamingTranslation",
+        "title": "i18n Nexus: Streaming Translation (Auto-Apply)"
+      },
+      {
         "command": "i18n-nexus.cancelTranslation",
         "title": "i18n Nexus: Cancel Translation"
       }
@@ -102,6 +106,16 @@
           "type": "boolean",
           "default": true,
           "description": "Enable chunked translation for large files with interactive review."
+        },
+        "i18nNexus.enableStreamingTranslation": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable streaming translation that applies changes directly without stopping for user confirmation."
+        },
+        "i18nNexus.autoSaveInterval": {
+          "type": "number",
+          "default": 100,
+          "description": "Delay in milliseconds between chunk processing for better visual feedback."
         },
         "i18nNexus.basePath": {
           "type": "string",
