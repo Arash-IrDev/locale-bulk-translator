@@ -11,7 +11,7 @@ export class OpenAICompatibleProvider implements ILLMProvider {
 
     initialize(config: vscode.WorkspaceConfiguration, logger: Logger): void {
         this.apiKey = config.get('llmApiKey') || '';
-        this.apiUrl = config.get('llmApiUrl') || 'https://api.aihubmix.com/v1/chat/completions';
+        this.apiUrl = config.get('llmApiUrl') || 'https://api.openai.com/v1/responses';
         this.model = config.get('llmModel') || 'gpt-4o';
         this.logger = logger;
         this.logger.log('OpenAICompatibleProvider initialized');
@@ -102,7 +102,7 @@ export class OpenAICompatibleProvider implements ILLMProvider {
             this.logger.log(`Request Body: ${JSON.stringify(requestBody, null, 2)}`);
     
             const response = await axios.post(
-                this.apiUrl + "",
+                this.apiUrl,
                 requestBody,
                 {
                     headers: {

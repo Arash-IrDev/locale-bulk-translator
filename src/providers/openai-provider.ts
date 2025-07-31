@@ -22,8 +22,14 @@ export class OpenAIProvider implements ILLMProvider {
         this.client = new OpenAI({ apiKey });
         
         if (typeof apiUrl === 'string' && apiUrl.trim() !== '') {
-            this.client.baseURL = apiUrl;
-            this.logger.log(`Using custom API URL: ${apiUrl}`);
+            // If the URL already contains the full endpoint, use it as is
+            if (apiUrl.includes('/responses')) {
+                this.client.baseURL = apiUrl.replace('/responses', '');
+                this.logger.log(`Using custom API URL: ${apiUrl} (adjusted to: ${this.client.baseURL})`);
+            } else {
+                this.client.baseURL = apiUrl;
+                this.logger.log(`Using custom API URL: ${apiUrl}`);
+            }
         }
         //this.logger = logger;
         // Add security check

@@ -44,7 +44,7 @@
       },
       {
         "command": "i18n-nexus.showConfig",
-        "title": "Show i18n Nexus Configuration"
+        "title": "i18n Nexus: Show Configuration"
       },
       {
         "command": "i18n-nexus.translateCurrentFile",
@@ -57,6 +57,14 @@
       {
         "command": "i18n-nexus.toggleDebugOutput",
         "title": "i18n Nexus: Toggle Debug Output"
+      },
+      {
+        "command": "i18n-nexus.translateLargeFile",
+        "title": "i18n Nexus: Translate Large File (Chunked)"
+      },
+      {
+        "command": "i18n-nexus.cancelTranslation",
+        "title": "i18n Nexus: Cancel Translation"
       }
     ],
     "keybindings": [
@@ -84,6 +92,16 @@
           "type": "number",
           "default": 1,
           "description": "Number of batches to translate in parallel. Increase carefully based on provider limits."
+        },
+        "i18nNexus.chunkSize": {
+          "type": "number",
+          "default": 50,
+          "description": "Number of keys in each chunk for large file translation. Smaller chunks provide better control but slower processing."
+        },
+        "i18nNexus.enableChunkedTranslation": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable chunked translation for large files with interactive review."
         },
         "i18nNexus.basePath": {
           "type": "string",

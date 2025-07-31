@@ -2,6 +2,7 @@
 // Import the module and reference it with the alias vscode in the code below
 import * as vscode from 'vscode';
 import { TranslationManager } from './translationManager';
+import { ChunkedTranslationManager } from './chunkedTranslationManager';
 import { LanguageSelector } from './languageSelector';
 import { ModelConfigurator } from './modelConfigurator';
 import { Logger } from './logger';
@@ -13,10 +14,12 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Initialize managers without API key validation during activation
     let translationManager: TranslationManager | undefined;
+    let chunkedTranslationManager: ChunkedTranslationManager | undefined;
     let modelConfigurator: ModelConfigurator | undefined;
     
     try {
         translationManager = new TranslationManager(logger, channel);
+        chunkedTranslationManager = new ChunkedTranslationManager(logger, channel);
         modelConfigurator = new ModelConfigurator(logger, channel);
         logger.log('All managers initialized');
     } catch (error) {
@@ -117,6 +120,32 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
+    // Register translate large file command
+    let translateLargeFileDisposable = vscode.commands.registerCommand('i18n-nexus.translateLargeFile', () => {
+        logger.log('Translate large file command triggered');
+        if (!chunkedTranslationManager) {
+            vscode.window.showErrorMessage('Chunked translation manager not initialized. Please check your configuration.');
+            return;
+        }
+        const activeEditor = vscode.window.activeTextEditor;
+        if (activeEditor) {
+            chunkedTranslationManager.translateLargeFile(activeEditor.document.uri);
+        } else {
+            vscode.window.showErrorMessage('No active file to translate');
+        }
+    });
+
+    // Register cancel translation command
+    let cancelTranslationDisposable = vscode.commands.registerCommand('i18n-nexus.cancelTranslation', () => {
+        logger.log('Cancel translation command triggered');
+        if (chunkedTranslationManager && chunkedTranslationManager.isActive()) {
+            chunkedTranslationManager.cancelTranslation();
+            vscode.window.showInformationMessage('Translation cancelled');
+        } else {
+            vscode.window.showInformationMessage('No active translation to cancel');
+        }
+    });
+
 
     // Register open settings command
     let openSettingsDisposable = vscode.commands.registerCommand('i18n-nexus.openSettings', () => {
@@ -127,6 +156,8 @@ export function activate(context: vscode.ExtensionContext) {
     // Add newly registered commands to context.subscriptions
     context.subscriptions.push(
         translateCurrentFileDisposable,
+        translateLargeFileDisposable,
+        cancelTranslationDisposable,
         openSettingsDisposable
     );
 
