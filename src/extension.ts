@@ -205,13 +205,7 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
-    // Register Reject All Changes command
-    let rejectAllChangesDisposable = vscode.commands.registerCommand('i18n-nexus.rejectAllChanges', () => {
-        logger.log('Reject all changes command triggered');
-        if (streamingTranslationManager) {
-            streamingTranslationManager.rejectAllChanges();
-        }
-    });
+
 
 
     // Register open settings command
@@ -227,7 +221,6 @@ export function activate(context: vscode.ExtensionContext) {
         streamingTranslationDisposable,
         cancelTranslationDisposable,
         acceptAllChangesDisposable,
-        rejectAllChangesDisposable,
         openSettingsDisposable
     );
 

@@ -1,20 +1,1181 @@
 {
-  "common": {
-    "welcome": "Welcome to our application",
-    "loading": "Loading...",
-    "error": "An error occurred",
-    "success": "Operation completed successfully",
-    "cancel": "Cancel",
-    "save": "Save",
-    "delete": "Delete",
-    "edit": "Edit",
-    "add": "Add",
-    "search": "Search"
+  "_comment": "کد منبع حقیقت برای عبارات انگلیسی است. آنها باید مستقیماً در کامپوننت‌ها به‌روزرسانی شوند و جمع‌های اضافی در این فایل مشخص شوند.",
+  "access-control": {
+    "add-permission": {
+      "built-in-aria-label": "انتخاب‌کننده نقش داخلی",
+      "level-aria-label": "سطح دسترسی",
+      "permissions-aria-label": "اسلایدر دسترسی‌ها",
+      "role-label": "نقش",
+      "role-select-aria-label": "نقش برای افزودن دسترسی جدید",
+      "serviceaccount-label": "حساب سرویس",
+      "team-label": "تیم",
+      "title": "افزودن دسترسی برای",
+      "user-label": "کاربر"
+    },
+    "add-permissions": {
+      "save": "ذخیره"
+    },
+    "permission-list": {
+      "permission": "دسترسی"
+    },
+    "permission-list-item": {
+      "inherited": "به ارث برده شده از پوشه",
+      "locked-aria-label": "نشانگر دسترسی قفل شده",
+      "remove-aria-label": "حذف دسترسی برای {{identifier}}",
+      "tooltip-inherited-permission": "دسترسی به ارث برده شده",
+      "tooltip-provisioned-permission": "دسترسی تأمین شده"
+    },
+    "permissions": {
+      "add-label": "افزودن یک دسترسی",
+      "no-permissions": "هیچ دسترسی‌ای وجود ندارد",
+      "permissions-change-warning": "این کار دسترسی‌های این پوشه و تمام زیرمجموعه‌های آن را تغییر خواهد داد. در مجموع، این بر موارد زیر تأثیر خواهد گذاشت:",
+      "role": "نقش",
+      "serviceaccount": "حساب سرویس",
+      "team": "تیم",
+      "title": "دسترسی‌ها",
+      "user": "کاربر"
+    }
   },
-  "validation": {
-    "required": "این فیلد الزامی است",
-    "invalidEmail": "لطفاً یک آدرس ایمیل معتبر وارد کنید",
-    "passwordMismatch": "رمزهای عبور مطابقت ندارند",
-    "minLength": "حداقل طول {min} کاراکتر است"
+  "action-editor": {
+    "modal": {
+      "cancel-button": "لغو",
+      "save-button": "ذخیره"
+    }
+  },
+  "actions": {
+    "action-editor": {
+      "button": {
+        "style": {
+          "background-color": "رنگ"
+        }
+      },
+      "label-headers": "هدرها",
+      "label-url": "آدرس اینترنتی",
+      "placeholder-url": "آدرس اینترنتی"
+    },
+    "params-editor": {
+      "aria-label-add": "افزودن",
+      "aria-label-delete": "حذف",
+      "placeholder-key": "کلید",
+      "placeholder-name": "نام",
+      "placeholder-value": "مقدار"
+    },
+    "variables-editor": {
+      "placeholder-type": "نوع"
+    }
+  },
+  "admin": {
+    "add-to-org-modal": {
+      "label-organization": "سازمان",
+      "label-role": "نقش",
+      "title-add-to-an-organization": "افزودن به یک سازمان"
+    },
+    "admin-edit-org-page": {
+      "label-name": "نام",
+      "page-nav": {
+        "subTitle": {
+          "manage-settings-roles-organization": "مدیریت تنظیمات و نقش‌های کاربر برای یک سازمان."
+        }
+      },
+      "render-missing-permission-message": {
+        "title-access-denied": "دسترسی رد شد"
+      }
+    },
+    "admin-feature-toggles-table": {
+      "confirm-modal-body-1": "برخی ویژگی‌ها پایدار (GA) هستند و به طور پیش‌فرض فعال هستند، در حالی که برخی در حال حاضر در مرحله مقدماتی بتا هستند و برای پذیرش زودهنگام در دسترس هستند.",
+      "confirm-modal-body-2": "ما توصیه می‌کنیم قبل از اعمال تغییرات، پیامدهای هر تغییر ویژگی را درک کنید.",
+      "confirmText-save-changes": "ذخیره تغییرات",
+      "get-stage-cell": {
+        "beta": "بتا",
+        "content-general-availability": "در دسترس بودن عمومی",
+        "deprecated": "منسوخ شده",
+        "ga": "GA"
+      },
+      "save-changes": "ذخیره تغییرات",
+      "saving": "در حال ذخیره...",
+      "title-apply-feature-toggle-changes": "اعمال تغییرات ویژگی‌های toggle"
+    },
+    "admin-orgs-table": {
+      "aria-label-delete-org": "حذف سازمان",
+      "confirmText-delete": "حذف",
+      "title-delete": "حذف"
+    },
+    "anon-users": {
+      "not-found": "هیچ کاربر ناشناس‌ای یافت نشد."
+    },
+    "base-user-sessions": {
+      "body-force-logout-from-all-devices": "آیا مطمئن هستید که می‌خواهید از تمام دستگاه‌ها خارج شوید؟",
+      "confirmText-confirm-logout": "تأیید خروج",
+      "confirmText-force-logout": "خروج اجباری",
+      "title-force-logout-from-all-devices": "خروج اجباری از تمام دستگاه‌ها"
+    },
+    "change-org-button": {
+      "confirmText-save": "ذخیره"
+    },
+    "edit-org": {
+      "access-denied": "شما مجوز دیدن کاربران در این سازمان را ندارید. برای به‌روزرسانی این سازمان، با مدیر سرور خود تماس بگیرید.",
+      "heading": "ویرایش سازمان",
+      "update-button": "به‌روزرسانی",
+      "users-heading": "کاربران سازمان"
+    },
+    "enterprise-auth-features-card": {
+      "dismiss": "رد کردن",
+      "heading": "احراز هویت سازمانی",
+      "learn-more-link": "بیشتر بدانید",
+      "text": "مدیریت خودکار کاربران، تیم‌ها و دسترسی‌ها با <1>SAML</1>، <3>SCIM</3>، <6>LDAP</6> و <8>RBAC</8> — در دسترس در Grafana Cloud و Enterprise."
+    },
+    "feature-listing": {
+      "title-auditing": "حسابرسی",
+      "title-custom-branding": "برندسازی سفارشی",
+      "title-dashboard-presence-indicators": "نشانگرهای حضور داشبورد",
+      "title-dashboard-usage-stats-drawer": "کشوی آمار استفاده از داشبورد",
+      "title-data-source-permissions": "دسترسی‌های منبع داده",
+      "title-enhanced-ldap-integration": "ادغام پیشرفته LDAP",
+      "title-enterprise-plugins": "پلاگین‌های سازمانی",
+      "title-find-unused-dashboards": "یافتن داشبوردهای استفاده نشده",
+      "title-grafana-usage-insights": "بینش‌های استفاده از Grafana",
+      "title-reporting": "گزارش‌گیری",
+      "title-saml-authentication": "احراز هویت SAML",
+      "title-settings-updates-at-runtime": "به‌روزرسانی تنظیمات در زمان اجرا",
+      "title-sort-dashboards-by-popularity-in-search": "مرتب‌سازی داشبوردها بر اساس محبوبیت در جستجو",
+      "title-team-sync": "همگام‌سازی تیم"
+    },
+    "feature-toggles": {
+      "restart-pending": "یک راه‌اندازی مجدد برای اعمال آخرین تغییرات ویژگی toggle در نمونه Grafana شما در انتظار است",
+      "restart-required": "ذخیره تغییرات ویژگی toggle باعث راه‌اندازی مجدد نمونه خواهد شد که ممکن است چند دقیقه طول بکشد",
+      "sub-title": "مشاهده و ویرایش ویژگی‌های toggle. اطلاعات بیشتر درباره ویژگی‌های toggle در <2>grafana.com</2> بخوانید."
+    },
+    "get-enterprise": {
+      "contact-us": "با ما تماس بگیرید و یک نسخه آزمایشی رایگان دریافت کنید",
+      "description": "شما می‌توانید نسخه آزمایشی را به مدت 30 روز به صورت رایگان استفاده کنید. ما پنج روز قبل از پایان دوره آزمایشی به شما یادآوری خواهیم کرد.",
+      "features-heading": "عملکرد پیشرفته",
+      "included-description": "جبران خسارت، همکاری با Grafana Labs در اولویت‌بندی آینده، و آموزش از تیم اصلی Grafana.",
+      "included-heading": "همچنین شامل:",
+      "service-title": "در خدمت شما",
+      "team-sync-details": "LDAP، GitHub OAuth، Auth Proxy، Okta",
+      "title": "دریافت Grafana Enterprise"
+    },
+    "ldap": {
+      "test-mapping-heading": "تست نگاشت کاربر",
+      "test-mapping-run-button": "اجرا"
+    },
+    "ldap-connection-status": {
+      "columns": {
+        "content-connection-is-available": "اتصال در دسترس است",
+        "content-connection-is-not-available": "اتصال در دسترس نیست"
+      }
+    },
+    "ldap-error-box": {
+      "title-connection-error": "خطای اتصال"
+    },
+    "ldap-page": {
+      "label-username": "نام کاربری"
+    },
+    "ldap-permissions": {
+      "active": "<0></0> فعال",
+      "admin": "<0></0> بله",
+      "inactive": "<0></0> غیرفعال"
+    },
+    "ldap-settings-page": {
+      "label-reset-to-default-values": "بازنشانی به مقادیر پیش‌فرض",
+      "title-invalid-configuration": "پیکربندی نامعتبر",
+      "title-more-actions": "عملیات بیشتر",
+      "tooltip-more-actions": "عملیات بیشتر"
+    },
+    "ldap-status": {
+      "title": "اتصال LDAP"
+    },
+    "ldap-sync": {
+      "debug-button": "اشکال‌زدایی نگاشت LDAP",
+      "external-sync-description": "کاربر از طریق LDAP همگام‌سازی شده است. برخی تغییرات باید در LDAP یا نگاشت‌ها انجام شود.",
+      "external-sync-label": "همگام‌سازی خارجی",
+      "next-sync-label": "همگام‌سازی برنامه‌ریزی شده بعدی",
+      "not-enabled": "فعال نشده",
+      "sync-button": "همگام‌سازی کاربر",
+      "title": "همگام‌سازی LDAP"
+    },
+    "ldap-sync-info": {
+      "title": "همگام‌سازی LDAP"
+    },
+    "ldap-user-groups": {
+      "columns": {
+        "content-no-matching-organizations-found": "هیچ سازمان مطابقی یافت نشد"
+      },
+      "no-org-found": "هیچ تطابقی یافت نشد"
+    },
+    "ldap-user-info": {
+      "no-team": "هیچ تیمی از طریق LDAP یافت نشد"
+    },
+    "org-role-picker": {
+      "placeholder-choose-role": "انتخاب نقش..."
+    },
+    "org-uers": {
+      "last-seen-never": "هرگز"
+    },
+    "org-users": {
+      "not-editable": "نقش این کاربر قابل ویرایش نیست زیرا از ارائه‌دهنده احراز هویت شما همگام‌سازی شده است. برای جزئیات به <1>مستندات احراز هویت گرافانا</1> مراجعه کنید."
+    },
+    "org-users-table": {
+      "body-delete": "آیا مطمئن هستید که می‌خواهید کاربر {{user}} را حذف کنید؟",
+      "columns": {
+        "aria-label-role": "نقش"
+      },
+      "confirmText-delete": "حذف",
+      "delete-aria-label": "حذف کاربر: {{name}}",
+      "title-delete": "حذف"
+    },
+    "orgs": {
+      "delete-body": "آیا مطمئن هستید که می‌خواهید '{{deleteOrgName}}' را حذف کنید؟<3></3> <5>تمام داشبوردهای این سازمان حذف خواهند شد!</5>",
+      "id-header": "شناسه",
+      "name-header": "نام",
+      "new-org-button": "سازمان جدید"
+    },
+    "server-settings": {
+      "alerts-button": "مدیریت هشدارها",
+      "dashboards-button": "مدیریت داشبوردها",
+      "data-sources-button": "مدیریت منابع داده",
+      "not-found": "آماری یافت نشد.",
+      "title": "آمار نمونه",
+      "users-button": "مدیریت کاربران"
+    },
+    "service-info": {
+      "title-critical-sla-hours": "SLA بحرانی: ۲ ساعت",
+      "title-email": "ایمیل",
+      "title-enterprise-plugins": "افزونه‌های سازمانی",
+      "title-handinhand-support-in-the-upgrade-process": "پشتیبانی گام‌به‌گام در فرآیند ارتقا",
+      "title-phone": "تلفن",
+      "title-private-slack-channel": "کانال خصوصی Slack",
+      "title-unlimited-expert-support": "پشتیبانی نامحدود متخصصان",
+      "year-round-support": "پشتیبانی ۲۴ × ۷ × ۳۶۵ از طریق"
+    },
+    "settings": {
+      "info-description": "این تنظیمات سیستمی در grafana.ini یا custom.ini تعریف شده‌اند (یا در متغیرهای ENV بازنویسی شده‌اند). برای تغییر این موارد فعلاً باید گرافانا را ریستارت کنید."
+    },
+    "un-themed-org-row": {
+      "confirmText-confirm-removal": "تأیید حذف"
+    },
+    "upgrade-info": {
+      "title": "لایسنس سازمانی"
+    },
+    "user-admin-page": {
+      "page-nav": {
+        "subTitle": {
+          "manage-settings-for-an-individual-user": "مدیریت تنظیمات برای یک کاربر خاص."
+        }
+      }
+    },
+    "user-create-page": {
+      "label-email": "ایمیل",
+      "label-name": "نام",
+      "label-password": "رمز عبور",
+      "label-username": "نام کاربری"
+    },
+    "user-ldap-sync-info": {
+      "label-ldap": "LDAP"
+    },
+    "user-list-admin-page-un-connected": {
+      "label": {
+        "active-last-days": "فعال در ۳۰ روز گذشته",
+        "all-users": "همه کاربران"
+      },
+      "placeholder-search-login-email": "جستجوی کاربر بر اساس ورود، ایمیل یا نام."
+    },
+    "user-list-anonymous-devices-page-un-connected": {
+      "label": {
+        "active-last-days": "فعال در ۳۰ روز گذشته"
+      },
+      "placeholder-search-devices-by-ip-address": "جستجوی دستگاه‌ها بر اساس آدرس IP."
+    },
+    "user-list-page": {
+      "label-all-users": "همه کاربران",
+      "label-anonymous-devices": "دستگاه‌های ناشناس",
+      "label-organization-users": "کاربران سازمان",
+      "label-users": "کاربران"
+    },
+    "user-orgs": {
+      "add-button": "افزودن کاربر به سازمان",
+      "change-role-button": "تغییر نقش",
+      "external-user-tooltip": "نقش داخلی این کاربر قابل ویرایش نیست زیرا از ارائه‌دهنده احراز هویت شما همگام‌سازی شده است. برای جزئیات به <1>مستندات احراز هویت گرافانا</1> مراجعه کنید.",
+      "remove-button": "حذف از سازمان",
+      "role-not-editable": "نقش این کاربر قابل ویرایش نیست زیرا از ارائه‌دهنده احراز هویت شما همگام‌سازی شده است. برای جزئیات به <1>مستندات احراز هویت گرافانا</1> مراجعه کنید.",
+      "title": "سازمان‌ها"
+    },
+    "user-orgs-modal": {
+      "add-button": "افزودن به سازمان",
+      "cancel-button": "لغو"
+    },
+    "user-permissions": {
+      "change-button": "تغییر",
+      "confirmText-change": "تغییر",
+      "grafana-admin-key": "مدیر گرافانا",
+      "grafana-admin-no": "خیر",
+      "grafana-admin-yes": "بله",
+      "title": "دسترسی‌ها"
+    },
+    "user-profile": {
+      "body-delete": "آیا مطمئن هستید که می‌خواهید این کاربر را حذف کنید؟",
+      "body-disable": "آیا مطمئن هستید که می‌خواهید این کاربر را غیرفعال کنید؟",
+      "confirmText-delete-user": "حذف کاربر",
+      "confirmText-disable-user": "غیرفعال کردن کاربر",
+      "delete-button": "حذف کاربر",
+      "disable-button": "غیرفعال کردن کاربر",
+      "edit-button": "ویرایش",
+      "enable-button": "فعال کردن کاربر",
+      "label-email": "ایمیل",
+      "label-name": "نام",
+      "label-numerical-identifier": "شناسه عددی",
+      "label-password": "رمز عبور",
+      "label-username": "نام کاربری",
+      "title": "اطلاعات کاربر",
+      "title-delete-user": "حذف کاربر",
+      "title-disable-user": "غیرفعال کردن کاربر"
+    },
+    "user-profile-row": {
+      "confirmText-save": "ذخیره"
+    },
+    "user-sessions": {
+      "browser-column": "مرورگر و سیستم‌عامل",
+      "force-logout-all-button": "خروج اجباری از همه دستگاه‌ها",
+      "force-logout-button": "خروج اجباری",
+      "ip-column": "آدرس IP",
+      "last-seen-column": "آخرین مشاهده",
+      "logged-on-column": "ورود در",
+      "now": "اکنون",
+      "title": "نشست‌ها"
+    },
+    "users-create": {
+      "create-button": "ایجاد کاربر"
+    },
+    "users-list": {
+      "create-button": "کاربر جدید"
+    },
+    "users-table": {
+      "columns": {
+        "content-grafana-admin": "مدیر گرافانا",
+        "title-edit-user": "ویرایش کاربر"
+      },
+      "edit-aria-label": "ویرایش کاربر: {{name}}",
+      "edit-tooltip": "ویرایش کاربر",
+      "last-seen-never": "هرگز",
+      "no-licensed-roles": "اختصاص داده نشده",
+      "tooltip-assigned-role": "یک نقش دارای مجوز هنگام ورود این کاربر اختصاص داده خواهد شد"
+    }
+  },
+  "alert-labels": {
+    "button": {
+      "hide": "مخفی کردن برچسب‌های مشترک",
+      "show": {
+        "tooltip": "نمایش برچسب‌های مشترک"
+      }
+    }
+  },
+  "alerting": {
+    "active-timing-fields": {
+      "am-active-timing-select-label-active-timings": "زمان‌بندی‌های فعال"
+    },
+    "ad": {
+      "close": "بستن",
+      "learn-more": "بیشتر بدانید"
+    },
+    "add-button": {
+      "add-more": "افزودن بیشتر"
+    },
+    "ai": {
+      "error-boundary": {
+        "alert-rule-button": "دکمه قانون هشدار هوش مصنوعی بارگذاری نشد",
+        "feedback-button": "دکمه بازخورد هوش مصنوعی بارگذاری نشد",
+        "improve-annotations-button": "دکمه بهبود یادداشت‌های هوش مصنوعی بارگذاری نشد",
+        "improve-labels-button": "دکمه بهبود برچسب‌های هوش مصنوعی بارگذاری نشد",
+        "template-button": "دکمه قالب هوش مصنوعی بارگذاری نشد",
+        "triage-button": "دکمه اولویت‌بندی هوش مصنوعی بارگذاری نشد"
+      }
+    },
+    "alert": {
+      "alert-state": "وضعیت هشدار",
+      "annotations": "یادداشت‌ها",
+      "description-missing-series-evaluations": "تعداد بازه‌های ارزیابی متوالی که یک بعد باید مفقود باشد قبل از اینکه نمونه هشدار منسوخ شود و سپس به طور خودکار حل و حذف شود. در صورت خالی بودن، پیش‌فرض ۲ است.",
+      "evaluation": "ارزیابی",
+      "evaluation-paused": "ارزیابی هشدار در حال حاضر متوقف شده",
+      "evaluation-paused-description": "اعلان‌ها برای این قانون فعال نخواهند شد و هیچ نمونه هشداری ایجاد نخواهد شد تا زمانی که قانون از حالت توقف خارج شود.",
+      "keep-firing-for": "ادامه فعال شدن برای",
+      "last-evaluated": "آخرین ارزیابی",
+      "last-evaluation-duration": "مدت زمان آخرین ارزیابی",
+      "last-updated-at": "آخرین به‌روزرسانی در",
+      "last-updated-by": "آخرین به‌روزرسانی توسط",
+      "missing-series-resolve": "ارزیابی‌های سری مفقود برای حل",
+      "no-annotations": "هیچ یادداشتی وجود ندارد",
+      "notification-configuration": {
+        "active-timings": "بازه‌های زمانی فعال",
+        "contact-point": "نقطه تماس",
+        "group-by": "گروه‌بندی بر اساس",
+        "group-title": "پیکربندی اعلان",
+        "mute-timings": "زمان‌بندی‌های سکوت",
+        "timing-options": "زمان‌بندی‌ها"
+      },
+      "pending-period": "دوره انتظار",
+      "rule": "قانون",
+      "rule-identifier": "شناسه قانون",
+      "rule-type": "نوع قانون",
+      "state-error-timeout": "وضعیت هشدار در صورت خطای اجرا یا تایم‌اوت",
+      "state-no-data": "وضعیت هشدار در صورت عدم وجود داده یا null بودن تمام مقادیر",
+      "target-datasource-uid": "منبع داده هدف"
+    },
+    "alert-details": {
+      "button-see-rule": "مشاهده قانون هشدار",
+      "button-see-source": "مشاهده منبع",
+      "manage-silences": "مدیریت سکوت‌ها",
+      "receivers-list": "گیرندگان: {{receivers}}",
+      "silence": "سکوت"
+    },
+    "alert-group": {
+      "delivered-to": "تحویل داده شده به <2>{{name}}</2>",
+      "no-grouping": "بدون گروه‌بندی"
+    },
+    "alert-group-alerts-table": {
+      "columns": {
+        "label": {
+          "instance-labels": "برچسب‌های نمونه",
+          "notification-state": "وضعیت اعلان"
+        }
+      },
+      "duration": "برای {{time}}"
+    },
+    "alert-group-filter": {
+      "clear-filters": "پاک کردن فیلترها"
+    },
+    "alert-groups": {
+      "body-grafana-alerted-delivered": "گرافانا برای ارسال هشدارها فقط به alertmanagerهای خارجی پیکربندی شده است. هیچ هشداری برای Alertmanager انتخاب شده در اینجا انتظار نمی‌رود.",
+      "grouped-by": "گروه‌بندی بر اساس: {{labels}}",
+      "no-results": "نتیجه‌ای یافت نشد.",
+      "text-loading-notifications": "در حال بارگذاری اعلان‌ها",
+      "title-error-loading-notifications": "خطا در بارگذاری اعلان‌ها",
+      "title-grafana-alerts-delivered-alertmanager": "هشدارهای گرافانا به Grafana Alertmanager تحویل داده نمی‌شوند"
+    },
+    "alert-groups-summary": {
+      "text-firing_one": "{{count}} فعال",
+      "text-firing_other": "{{count}} فعال",
+      "text-suppressed_one": "{{count}} سرکوب شده",
+      "text-suppressed_other": "{{count}} سرکوب شده",
+      "text-unprocessed_one": "{{count}} پردازش نشده",
+      "text-unprocessed_other": "{{count}} پردازش نشده"
+    },
+    "alert-instance-details": {
+      "label-value": "مقدار"
+    },
+    "alert-instance-extension-point": {
+      "aria-label-actions": "عملیات"
+    },
+    "alert-instance-modal-selector": {
+      "add-alert-data-to-payload": "افزودن داده هشدار به محموله",
+      "placeholder-search-alert-rule": "جستجوی قانون هشدار",
+      "select-alert-rule": "یک قانون هشدار انتخاب کنید تا لیست نمونه‌های فعال موجود را ببینید",
+      "text-loading-rule": "در حال بارگذاری قانون...",
+      "text-loading-rules": "در حال بارگذاری قوانین...",
+      "title-search-alert-rule": "جستجوی قانون هشدار",
+      "title-select-alert-instances": "انتخاب نمونه‌های هشدار"
+    },
+    "alert-instance-state-filter": {
+      "state": "وضعیت"
+    },
+    "alert-label": {
+      "tooltip-remove-label": "حذف برچسب"
+    },
+    "alert-label-dropdown": {
+      "placeholder-select": "انتخاب {{type}}"
+    },
+    "alert-labels": {
+      "aria-label-labels": "برچسب‌ها",
+      "common-labels-count_one": "+{{count}} برچسب مشترک",
+      "common-labels-count_other": "+{{count}} برچسب مشترک"
+    },
+    "alert-manager-manual-routing": {
+      "label-muting-grouping-and-timings-optional": "سکوت، گروه‌بندی و زمان‌بندی (اختیاری)",
+      "title-muting-grouping-and-timings": "سکوت، گروه‌بندی و زمان‌بندی"
+    },
+    "alert-manager-picker": {
+      "noOptionsMessage-no-datasources-found": "هیچ منبع داده‌ای یافت نشد"
+    },
+    "alert-menu": {
+      "copy-link": "کپی لینک",
+      "duplicate": "تکرار",
+      "export": "صادر کردن",
+      "silence-notifications": "سکوت اعلان‌ها",
+      "with-modifications": "با تغییرات"
+    },
+    "alert-missing-evaluations-to-stale": {
+      "help-info": {
+        "link-text": "بیشتر درباره نمونه‌های هشدار منسوخ بخوانید",
+        "text1": "یک نمونه هشدار منسوخ در نظر گرفته می‌شود اگر کوئری قانون هشدار داده برگرداند، اما بعد خاص (یا سری) برای آن نمونه هشدار برای چندین بازه ارزیابی متوالی مفقود باشد.",
+        "text2": "یک نمونه هشدار منسوخ حل و سپس حذف می‌شود.",
+        "text3": "این تنظیم تعریف می‌کند که چندین بازه ارزیابی متوالی باید بدون داده بگذرد قبل از اینکه یک نمونه هشدار منسوخ در نظر گرفته شود. در صورت خالی بودن، پیش‌فرض ۲ است.",
+        "title": "نمونه‌های هشدار منسوخ"
+      }
+    },
+    "alert-recording-rule-form": {
+      "evaluation-behaviour": {
+        "description": {
+          "text": "تعریف کنید که قانون ضبط چگونه ارزیابی شود."
+        }
+      }
+    },
+    "alert-rule": {
+      "term": "قانون هشدار"
+    },
+    "alert-rule-form": {
+      "action-buttons": {
+        "edit-yaml": "ویرایش YAML",
+        "save": "ذخیره"
+      }
+    },
+    "alert-rule-name-and-metric": {
+      "aria-label-name": "نام",
+      "description-section": "نامی برای شناسایی {{entityName}} خود وارد کنید.",
+      "label-metric": "متریک",
+      "label-name": "نام",
+      "message": {
+        "must-enter-a-metric-name": "باید نام متریک وارد کنید",
+        "must-enter-a-name": "باید نامی وارد کنید",
+        "please-select-a-data-source": "لطفاً یک منبع داده انتخاب کنید"
+      },
+      "metric-aria-label-metric": "متریک",
+      "metric-placeholder-recorded-metric": "نام متریک ضبط شده جدید را بدهید",
+      "placeholder-name": "به {{namePlaceholder}} خود نامی بدهید",
+      "title-section": "نام {{entityName}} را وارد کنید"
+    },
+    "alert-rules": {
+      "firing-for": "فعال برای",
+      "next-evaluation": "ارزیابی بعدی",
+      "next-evaluation-in": "ارزیابی بعدی در",
+      "rule-definition": "تعریف قانون"
+    },
+    "alert-rules-drawer": {
+      "text-loading-alert-rules": "در حال بارگذاری قوانین هشدار",
+      "title-alert-rules": "قوانین هشدار"
+    },
+    "alert-rules-drawer-content": {
+      "text-loading-alert-rules": "در حال بارگذاری قوانین هشدار"
+    },
+    "alert-state-filter": {
+      "active-the-alert-is-firing": "فعال: اعلان هشدار پردازش شده است. هشدار همچنان فعال است و به مدیریت ادامه می‌دهد.",
+      "notification-state": "وضعیت اعلان",
+      "suppressed-the-alert-has-been-silenced": "سرکوب شده: هشدار سکوت شده است.",
+      "unprocessed-the-alert-is-received": "پردازش نشده: هشدار دریافت شده اما اعلان آن هنوز پردازش نشده است."
+    },
+    "alert-state-tag": {
+      "content-alert-evaluation-is-currently-paused": "ارزیابی هشدار در حال حاضر متوقف شده",
+      "paused": "متوقف شده"
+    },
+    "alert-warning": {
+      "to-rule-list": "به لیست قوانین"
+    },
+    "alertform": {
+      "labels": {
+        "alerting": "برچسب‌ها را به قانون خود برای جستجو، سکوت یا مسیریابی به یک سیاست اعلان اضافه کنید.",
+        "recording": "برچسب‌ها را به قانون خود اضافه کنید."
+      }
+    },
+    "alertmanager-card": {
+      "disable": "غیرفعال",
+      "edit-configuration": "ویرایش پیکربندی",
+      "enable": "فعال",
+      "not-receiving-grafana-managed-alerts": "دریافت هشدارهای مدیریت شده گرافانا",
+      "text-activation-in-progress": "فعال‌سازی در حال انجام",
+      "text-failed-to-adopt-alertmanager": "اتخاذ Alertmanager با خطا مواجه شد",
+      "text-inconclusive": "نامشخص",
+      "text-receiving-grafanamanaged-alerts": "دریافت هشدارهای مدیریت شده گرافانا",
+      "title-alerting-settings": "تنظیمات هشدار",
+      "view-configuration": "مشاهده پیکربندی"
+    },
+    "alertmanager-config": {
+      "confirmText-yes-reset-configuration": "بله، بازنشانی پیکربندی",
+      "gma-manual-configuration-description": "پیکربندی داخلی Grafana Alertmanager نمی‌تواند به صورت دستی تغییر کند. برای تغییر این پیکربندی، منابع فردی را از طریق رابط کاربری ویرایش کنید.",
+      "gma-manual-configuration-is-not-supported": "تغییرات پیکربندی دستی پشتیبانی نمی‌شود",
+      "message": {
+        "configuration-cannot-be-empty": "پیکربندی نمی‌تواند خالی باشد"
+      },
+      "reset": "بازنشانی",
+      "reset-confirmation": "آیا مطمئن هستید که می‌خواهید پیکربندی \"{{alertmanagerName}}\" را بازنشانی کنید؟ نقاط تماس و سیاست‌های اعلان به پیش‌فرض‌های خود بازنشانی خواهند شد.",
+      "resetting-configuration-might-while": "بازنشانی پیکربندی، ممکن است کمی طول بکشد.",
+      "title-failed-to-load-alertmanager-configuration": "بارگذاری پیکربندی Alertmanager با خطا مواجه شد",
+      "title-oops-something-went-wrong": "اوه، مشکلی پیش آمد",
+      "title-reset-alertmanager-configuration": "بازنشانی پیکربندی Alertmanager",
+      "title-resetting-alertmanager-configuration": "بازنشانی پیکربندی Alertmanager"
+    },
+    "alertmanager-configuration-version-manager": {
+      "body-restore-configuration-version-unsaved-changes": "آیا مطمئن هستید که می‌خواهید پیکربندی را به این نسخه بازگردانید؟ تمام تغییرات ذخیره نشده از دست خواهند رفت.",
+      "columns": {
+        "compare": "مقایسه",
+        "restore": "بازگردانی",
+        "text-latest": "آخرین"
+      },
+      "confirmText-yes-restore-configuration": "بله، بازگردانی پیکربندی",
+      "loading": "در حال بارگذاری...",
+      "no-previous-configurations": "هیچ پیکربندی قبلی وجود ندارد",
+      "this-might-take-a-while": "ممکن است کمی طول بکشد...",
+      "title-failed-to-load-configuration-history": "بارگذاری تاریخچه پیکربندی با خطا مواجه شد",
+      "title-restore-version": "بازگردانی نسخه",
+      "title-restoring-alertmanager-configuration": "بازگردانی پیکربندی Alertmanager"
+    },
+    "alerts-folder-view": {
+      "aria-label-sort": "مرتب‌سازی",
+      "label-filter-placeholder-search-alerts-by-labels": "جستجوی هشدارها بر اساس برچسب‌ها",
+      "name-filter-placeholder-search-alert-rules-by-name": "جستجوی قوانین هشدار بر اساس نام",
+      "no-alert-rules-found": "هیچ قانون هشداری یافت نشد",
+      "placeholder-sort-default-az": "مرتب‌سازی (پیش‌فرض الف-ی)"
+    },
+    "alertVersionHistory": {
+      "alerting": "هشدار",
+      "alerting-change-description": "این به‌روزرسانی توسط سیستم هشدار به دلیل تغییرات دیگر انجام شد. به عنوان مثال، هنگام تغییر نام نقطه تماسی که برای مسیریابی ساده شده استفاده می‌شود، این کار قوانین تأثیرپذیر را به‌روزرسانی خواهد کرد",
+      "annotations": "یادداشت‌ها",
+      "compare": "مقایسه",
+      "compare-with-latest": "مقایسه با آخرین نسخه",
+      "compareVersions": "مقایسه نسخه‌ها",
+      "comparing-versions": "مقایسه نسخه‌ها",
+      "condition": "شرط هشدار",
+      "contactPointRouting": "مسیریابی نقطه تماس",
+      "description": "هر بار که قانون هشدار را ویرایش می‌کنید، یک نسخه جدید ایجاد می‌شود. دو نسخه زیر را انتخاب کنید و تفاوت‌های آن‌ها را مقایسه کنید.",
+      "errorloading": "بارگذاری نسخه‌های قانون هشدار با خطا مواجه شد",
+      "execErrorState": "وضعیت هشدار در صورت خطای اجرا",
+      "intervalSeconds": "بازه ارزیابی",
+      "labels": "برچسب‌ها",
+      "latest": "آخرین",
+      "name": "نام",
+      "namespace_uid": "شناسه پوشه",
+      "noDataState": "وضعیت هشدار در صورت عدم وجود داده",
+      "noVersionsFound": "هیچ نسخه‌ای برای این قانون یافت نشد",
+      "paused": "وضعیت متوقف شده",
+      "pendingPeriod": "دوره انتظار",
+      "provisioning": "تأمین",
+      "provisioning-change-description": "به‌روزرسانی نسخه از طریق تأمین انجام شد",
+      "queryAndAlertCondition": "کوئری و شرط هشدار",
+      "restore": "بازگردانی",
+      "restore-manually": "قانون هشدار شما قابل بازگردانی نبود. ممکن است به دلیل تغییرات سایر موجودیت‌ها مانند نقاط تماس، منابع داده و غیره باشد. لطفاً نسخه قانون را به صورت دستی بازگردانید",
+      "restore-modal": {
+        "body": "آیا مطمئن هستید که می‌خواهید تعریف قانون هشدار را به این نسخه بازگردانید؟ تمام تغییرات ذخیره نشده از دست خواهند رفت.",
+        "confirm": "بله، بازگردانی پیکربندی",
+        "error": "امکان بازگردانی نسخه قانون هشدار وجود ندارد ",
+        "summary": "خلاصه تغییراتی که اعمال خواهند شد:",
+        "title": "بازگردانی نسخه"
+      },
+      "restore-version": "بازگردانی به نسخه {{version}}",
+      "rule_group": "گروه قانون",
+      "unknown": "نامشخص",
+      "unknown-change-description": "این به‌روزرسانی قبل از پیاده‌سازی تاریخچه نسخه قانون هشدار انجام شد. کاربری که تغییر را انجام داده ردیابی نمی‌شود، اما تغییرات آینده شامل کاربر خواهند بود",
+      "user-id": "شناسه کاربر {{uid}}",
+      "warning-restore-manually": "شما در حال بازگردانی دستی یک نسخه قدیمی از این قانون هشدار هستید. لطفاً تغییرات را قبل از ذخیره تعریف قانون به دقت بررسی کنید.",
+      "warning-restore-manually-title": "بازگردانی قانون به صورت دستی"
+    },
+    "all-matches-indicator": {
+      "content-this-policy-matches-all-labels": "این سیاست با تمام برچسب‌ها مطابقت دارد"
+    },
+    "am-root-route-form": {
+      "am-group-description-label": "زمان انتظار قبل از ارسال اولین اعلان برای یک گروه جدید از هشدارها. پیش‌فرض ۳۰ ثانیه.",
+      "am-group-interval-description": "زمان انتظار قبل از ارسال اعلان درباره تغییرات در گروه هشدار پس از ارسال اولین اعلان. پیش‌فرض ۵ دقیقه است.",
+      "am-group-interval-label-group-interval": "بازه گروه",
+      "am-group-select-description-group-by": "چندین هشدار را با گروه‌بندی آن‌ها بر اساس مقادیر برچسب یکسان در یک اعلان واحد ترکیب کنید.",
+      "am-group-select-label-group-by": "گروه‌بندی بر اساس",
+      "am-group-wait-label-group-wait": "انتظار گروه",
+      "am-repeat-interval-description": "زمان انتظار قبل از ارسال مجدد اعلانی که قبلاً با موفقیت ارسال شده است. پیش‌فرض ۴ ساعت است. باید مضربی از بازه گروه باشد.",
+      "am-repeat-interval-label-repeat-interval": "بازه تکرار",
+      "aria-label-group-by": "گروه‌بندی بر اساس",
+      "aria-label-group-interval": "بازه گروه",
+      "aria-label-group-wait": "انتظار گروه",
+      "aria-label-repeat-interval": "بازه تکرار",
+      "create-a-contact-point": "ایجاد یک نقطه تماس",
+      "label-default-contact-point": "نقطه تماس پیش‌فرض",
+      "label-timing-options": "گزینه‌های زمان‌بندی",
+      "message": {
+        "required": "ضروری است."
+      },
+      "or": "یا"
+    },
+    "am-routes-expanded-form": {
+      "add-matcher": "افزودن تطبیق‌دهنده",
+      "am-active-timing-select-label-active-timings": "زمان‌بندی‌های فعال",
+      "am-mute-timing-select-description-add-active-timing-to-policy": "افزودن زمان‌بندی فعال به سیاست",
+      "am-mute-timing-select-description-add-mute-timing-to-policy": "افزودن زمان‌بندی سکوت به سیاست",
+      "am-mute-timing-select-label-mute-timings": "زمان‌بندی‌های سکوت",
+      "aria-label-group-by": "گروه‌بندی بر اساس",
+      "aria-label-operator": "عملگر",
+      "badge-no-matchers": "اگر هیچ تطبیق‌دهنده‌ای مشخص نشده باشد، این سیاست اعلان تمام نمونه‌های هشدار را مدیریت خواهد کرد.",
+      "description-group-by": "چندین هشدار را با گروه‌بندی آن‌ها بر اساس مقادیر برچسب یکسان در یک اعلان واحد ترکیب کنید. اگر خالی باشد، از سیاست والد به ارث برده می‌شود.",
+      "label-contact-point": "نقطه تماس",
+      "label-continue-matching-subsequent-sibling-nodes": "ادامه تطبیق گره‌های خواهر و برادر بعدی",
+      "label-group-by": "گروه‌بندی بر اساس",
+      "label-label": "برچسب",
+      "label-operator": "عملگر",
+      "label-override-general-timings": "بازنویسی زمان‌بندی‌های عمومی",
+      "label-override-grouping": "بازنویسی گروه‌بندی",
+      "label-value": "مقدار",
+      "matching-labels": "برچسب‌های مطابق",
+      "message": {
+        "required": "ضروری است."
+      },
+      "placeholder-label": "برچسب",
+      "placeholder-value": "مقدار",
+      "remove": "حذف",
+      "tooltip-remove-matcher": "حذف تطبیق‌دهنده"
+    },
+    "annotation-header-field": {
+      "message": {
+        "required": "ضروری است."
+      }
+    },
+    "annotations": {
+      "dashboard-annotation-field": {
+        "dashboard": "داشبورد {{dashboardUid}}",
+        "panel": "پنل {{panelId}}"
+      },
+      "description": "متن بیشتری به اعلان‌های هشدار خود اضافه کنید.",
+      "title": "پیکربندی پیام اعلان"
+    },
+    "annotations-step": {
+      "add-custom-annotation": "افزودن یادداشت سفارشی",
+      "aria-label-delete-annotation": "حذف یادداشت",
+      "get-annotations-section-description": {
+        "title-annotations": "یادداشت‌ها"
+      },
+      "link-dashboard-and-panel": "لینک داشبورد و پنل",
+      "placeholder-value-input-default": "محتوای یادداشت سفارشی را وارد کنید..."
+    },
+    "bulk-actions": {
+      "delete": {
+        "success": "قوانین با موفقیت از پوشه حذف شدند"
+      },
+      "pause": {
+        "success": "ارزیابی قوانین با موفقیت برای پوشه متوقف شد"
+      },
+      "unpause": {
+        "success": "قوانین با موفقیت برای این پوشه از حالت توقف خارج شدند"
+      }
+    },
+    "central-alert-history": {
+      "details": {
+        "error": "خطا در بارگذاری قانون برای این رویداد.",
+        "header": {
+          "alert-rule": "قانون هشدار",
+          "instance": "نمونه",
+          "state": "وضعیت",
+          "timestamp": "مهر زمانی"
+        },
+        "loading": "در حال بارگذاری...",
+        "no-recognized-state": "هیچ وضعیت شناخته شده‌ای وجود ندارد",
+        "no-values": "هیچ مقداری وجود ندارد",
+        "not-found": "قانونی برای این رویداد یافت نشد.",
+        "number-transitions": "انتقال‌های وضعیت برای دوره انتخاب شده:",
+        "state": {
+          "alerting": "هشدار",
+          "error": "خطا",
+          "no-data": "بدون داده",
+          "normal": "عادی",
+          "pending": "در انتظار",
+          "recovering": "در حال بازیابی"
+        },
+        "state-transitions": "انتقال وضعیت",
+        "unknown-event-state": "نامشخص",
+        "unknown-rule": "نامشخص",
+        "value-in-transition": "مقدار در انتقال"
+      },
+              "error": "مشکلی در بارگذاری تاریخچه وضعیت هشدار پیش آمد",
+        "filter": {
+          "clear": "پاک کردن فیلترها",
+          "info": {
+            "label1": "فیلتر کردن رویدادها با استفاده از جستجوی برچسب بدون فاصله، مثال:",
+            "label2": "استفاده نامعتبر از فاصله:",
+            "label3": "استفاده معتبر از فاصله:",
+            "label4": "فیلتر کردن هشدارها با استفاده از جستجوی برچسب بدون بریس، مثال:"
+          }
+        },
+        "filterBy": "فیلتر بر اساس:",
+        "too-many-events": {
+          "text": "دوره زمانی انتخاب شده رویدادهای زیادی برای نمایش دارد. نمایش آخرین ۵۰۰۰ رویداد. سعی کنید از دوره زمانی کوتاه‌تری استفاده کنید.",
+          "title": "عدم امکان نمایش تمام رویدادها"
+        }
+    },
+    "central-alert-history-scene": {
+      "scene": {
+        "labels-filter-variable": {
+          "label": {
+            "labels": "برچسب‌ها: "
+          }
+        },
+        "transitions-from-filter-variable": {
+          "label": {
+            "start-state": "وضعیت شروع:"
+          }
+        },
+        "transitions-to-filter-variable": {
+          "label": {
+            "end-state": "وضعیت پایان:"
+          }
+        }
+      }
+    },
+    "channel-sub-form": {
+      "delete": "حذف",
+      "duplicate": "تکرار",
+      "label-integration": "ادغام",
+      "label-notification-settings": "تنظیمات اعلان",
+      "label-section": "تنظیمات اختیاری {{name}}",
+      "test": "تست"
+    },
+    "classic-condition-viewer": {
+      "of": "از",
+      "when": "زمانی که"
+    },
+    "clear-filter-button-object-renderer": {
+      "content-clear-filter": "پاک کردن فیلتر"
+    },
+    "clone-rule-button": {
+      "title-copy": "کپی"
+    },
+    "clone-rule-editor": {
+      "text-loading-the-rule": "در حال بارگذاری قانون...",
+      "title-cannot-exist": "امکان کپی کردن قانون وجود ندارد. قانون وجود ندارد",
+      "title-error": "خطا"
+    },
+    "cloud-alert-preview": {
+      "alerts-preview": "پیش‌نمایش هشدارها",
+      "info": "اطلاعات",
+      "labels": "برچسب‌ها",
+      "running-query-preview": "پیش‌نمایش بر اساس نتیجه اجرای کوئری برای این لحظه.",
+      "state": "وضعیت"
+    },
+    "cloud-common-channel-settings": {
+      "description-whether-notify-about-resolved-alerts": "آیا درباره هشدارهای حل شده اعلان شود یا نه.",
+      "label-send-resolved": "ارسال حل شده"
+    },
+    "cloud-data-source-selector": {
+      "label": "انتخاب منبع داده",
+      "label-disabled": "منبع داده",
+      "message": {
+        "please-select-a-data-source": "لطفاً یک منبع داده انتخاب کنید"
+      }
+    },
+    "cloud-evaluation-behavior": {
+      "description-pending-period": "دوره‌ای که شرط آستانه باید برآورده شود تا هشدار فعال شود. انتخاب \"هیچ‌کدام\" هشدار را بلافاصله پس از برآورده شدن شرط فعال می‌کند.",
+      "label-pending-period": "دوره انتظار",
+      "message": {
+        "must-be-a-positive-integer": "باید یک عدد صحیح مثبت باشد."
+      },
+      "title-set-evaluation-behavior": "تنظیم رفتار ارزیابی"
+    },
+    "cloud-receiver-form": {
+      "body-info": "توجه داشته باشید که مقادیر رشته خالی با پیش‌فرض‌های جهانی جایگزین خواهند شد در جایی که مناسب باشد.",
+      "title-info": "اطلاعات"
+    },
+    "common": {
+      "cancel": "لغو",
+      "clear-filters": "پاک کردن فیلترها",
+      "delete": "حذف",
+      "edit": "ویرایش",
+      "export": "صادر کردن",
+      "export-all": "صادر کردن همه",
+      "learn-more": "بیشتر بدانید",
+      "loading": "در حال بارگذاری...",
+      "search-by-matchers": "جستجو بر اساس تطبیق‌دهنده‌ها",
+      "titles": {
+        "notification-templates": "قالب‌های اعلان"
+      },
+      "view": "مشاهده"
+    },
+    "compare-versions": {
+      "restore": "بازگردانی",
+      "return": "بازگشت"
+    },
+    "contact-point-errors": {
+      "label-contact-point": "نقطه تماس › {{name}}"
+    },
+    "contact-point-header": {
+      "aria-label-more-actions": "عملیات بیشتر برای نقطه تماس \"{{contactPointName}}\"",
+      "ariaLabel-delete": "حذف",
+      "button-edit": "ویرایش",
+      "button-view": "مشاهده",
+      "export-ariaLabel-export": "صادر کردن",
+      "export-label-export": "صادر کردن",
+      "label-delete": "حذف",
+      "label-manage-permissions": "مدیریت دسترسی‌ها",
+      "tooltip-provisioned-contact-points": "نقاط تماس تأمین شده نمی‌توانند در رابط کاربری ویرایش شوند"
+    },
+    "contact-point-selector": {
+      "contact-point-picker-label-contact-point": "نقطه تماس",
+      "message": {
+        "contact-point-is-required": "نقطه تماس ضروری است."
+      },
+      "title-failed-to-fetch-contact-points": "دریافت نقاط تماس با خطا مواجه شد"
+    },
+    "contact-points": {
+      "create": "ایجاد نقطه تماس",
+      "custom-template-value": "مقدار قالب سفارشی",
+      "delete-reasons": {
+        "heading": "نقطه تماس به دلایل زیر نمی‌تواند حذف شود:",
+        "no-permissions": "شما مجوز لازم برای حذف این نقطه تماس را ندارید",
+        "policies": "نقطه تماس توسط یک یا چند سیاست اعلان ارجاع داده شده است",
+        "provisioned": "نقطه تماس تأمین شده و نمی‌تواند از طریق رابط کاربری حذف شود",
+        "rules": "نقطه تماس توسط یک یا چند قانون هشدار ارجاع داده شده است"
+      },
+      "delivered-to": "تحویل داده شده به",
+      "delivery-duration": "آخرین تحویل <1></1> طول کشید",
+      "empty-state": {
+        "title": "شما هنوز هیچ نقطه تماسی ندارید"
+      },
+      "key-value-map": {
+        "add": "افزودن",
+        "confirm-add": "تأیید برای افزودن"
+      },
+      "last-delivery-attempt": "آخرین تلاش تحویل",
+      "last-delivery-failed": "آخرین تلاش تحویل با خطا مواجه شد",
+      "no-contact-points-found": "هیچ نقطه تماسی یافت نشد",
+      "no-delivery-attempts": "هیچ تلاش تحویلی وجود ندارد",
+      "no-integrations": "هیچ ادغامی پیکربندی نشده است",
+      "only-firing": "تحویل اعلان‌های <1>فقط فعال</1>",
+      "receiver-summary": {
+        "jira": "ایجاد یک مسئله \"{{issueType}}\" در پروژه \"{{project}}\""
+      },
+      "telegram": {
+        "parse-mode-warning-body": "اگر از گزینه <1>parse_mode</1> غیر از <3>None</3> استفاده کنید، کوتاه‌سازی ممکن است منجر به پیام نامعتبر شود و باعث شکست اعلان شود. برای پیام‌های طولانی‌تر، ما استفاده از روش تماس جایگزین را توصیه می‌کنیم.",
+        "parse-mode-warning-title": "پیام‌های تلگرام به ۴۰۹۶ کاراکتر UTF-8 محدود هستند."
+      },
+      "used-by_one": "استفاده شده توسط {{ count }} سیاست اعلان",
+      "used-by_other": "استفاده شده توسط {{ count }} سیاست اعلان",
+      "used-by-rules_one": "استفاده شده توسط {{ count }} قانون هشدار",
+      "used-by-rules_other": "استفاده شده توسط {{ count }} قانون هشدار"
+    },
+    "contact-points-filter": {
+      "aria-label-clear": "پاک کردن",
+      "aria-label-search-contact-points": "جستجوی نقاط تماس",
+      "clear": "پاک کردن",
+      "label-search-by-name-or-type": "جستجو بر اساس نام یا نوع",
+      "placeholder-search": "جستجو"
+    },
+    "contact-points-page-contents": {
+      "label-contact-points": "نقاط تماس",
+      "label-notification-templates": "قالب‌های اعلان"
+    },
+    "contact-points-tab": {
+      "aria-label-add-contact-point": "افزودن نقطه تماس",
+      "aria-label-export-all": "صادر کردن همه",
+      "export-all": "صادر کردن همه",
+      "text-loading": "در حال بارگذاری...",
+      "title-failed-to-fetch-contact-points": "دریافت نقاط تماس با خطا مواجه شد"
+    },
+    "contactPointFilter": {
+      "label": "نقطه تماس"
+    },
+    "contactPoints": {
+      "validation": {
+        "notFound": "نقطه تماس \"{{contactPoint}}\" یافت نشد"
+      }
+    },
+    "continue-matching-indicator": {
+      "content-route-continue-matching-other-policies": "این مسیر به تطبیق سایر سیاست‌ها ادامه خواهد داد"
+    },
+    "copy-to-clipboard": "کپی \"{{label}}\" به کلیپ‌بورد",
+    "create-metadata": {
+      "label": {
+        "contact-point": "اعلان‌ها تحویل داده می‌شوند به",
+        "dashboard": "داشبورد",
+        "dashboard-and-panel": "داشبورد و پنل",
+        "evaluation-interval": "بازه ارزیابی",
+        "labels": "برچسب‌ها",
+        "metric-name": "نام متریک",
+        "runbook-url": "آدرس راهنمای اجرا"
+      },
+      "view-dashboard": "مشاهده داشبورد",
+      "view-panel": "مشاهده پنل"
+    },
+    "create-new-folder": {
+      "folder": {
+        "cancel": "لغو",
+        "create": "ایجاد",
+        "name": "نام پوشه"
+      },
+      "new-folder": "پوشه جدید",
+      "placeholder-enter-a-name": "نامی وارد کنید",
+      "title-new-folder": "پوشه جدید"
+    },
+    "custom-annotation-header-field": {
+      "custom-annotation-name-and-content": "نام و محتوای یادداشت سفارشی",
+      "placeholder-enter-custom-annotation-name": "نام یادداشت سفارشی را وارد کنید..."
+    },
+    "dag": {
+      "missing-reference": "عبارت \"{{source}}\" اجرا نشد زیرا \"{{target}}\" مفقود است یا آن هم با خطا مواجه شد.",
+      "self-reference": "شما نمی‌توانید یک عبارت را به خودش لینک کنید"
+    },
+    "dashboard-picker": {
+      "confirm": "تأیید",
+      "current-selection-dashboard": "داشبورد: {{dashboardTitle}} ({{ dashboardUid }}) در پوشه {{ folderTitle }}",
+      "current-selection-panel": "پنل: {{ panelTitle }} ({{ panelId }})",
+      "fallback-dashboards-string": "داشبوردها",
+      "panel-row": {
+        "content-panel-valid-identifier": "این پنل شناسه معتبری ندارد.",
+        "tooltip-alert-tab-support": "تب هشدار و یادداشت‌های هشدار فقط در پنل‌های نمودار و سری زمانی پشتیبانی می‌شوند."
+      },
+      "placeholder-search-dashboard": "جستجوی داشبورد",
+      "placeholder-search-panel": "جستجوی پنل",
+      "select-dashboard-available-panels": "یک داشبورد انتخاب کنید تا لیست پنل‌های موجود را ببینید",
+      "text-loading-dashboard": "در حال بارگذاری داشبورد...",
+      "text-loading-dashboards": "در حال بارگذاری داشبوردها...",
+      "title-current-selection": "انتخاب فعلی",
+      "title-search-dashboard": "جستجوی داشبورد",
+      "title-search-panel": "جستجوی پنل",
+      "title-select-dashboard-and-panel": "انتخاب داشبورد و پنل"
+    },
+    "datasource-not-found": {
+      "card-description": "منبع داده برای این کوئری یافت نشد، یا حذف شده یا به درستی نصب نشده است.",
+      "remove-query": "حذف کوئری",
+      "show-details": "نمایش جزئیات",
+      "this-datasource-has-been-removed": "این منبع داده حذف شده است",
+      "update-datasource": "به‌روزرسانی منبع داده"
+    },
+    "declare-incident-button": {
+      "content-grafana-incident-installed-configured-correctly": "Grafana Incident نصب نشده یا به درستی پیکربندی نشده است",
+      "declare-incident": "اعلان حادثه"
+    },
+    "declare-incident-menu-item": {
+      "content-grafana-incident-installed-configured-correctly": "Grafana Incident نصب نشده یا به درستی پیکربندی نشده است",
+      "label-declare-incident": "اعلان حادثه"
+    },
+    "delete-rule-modal": {
+      "title": "حذف قانون",
+      "with-soft-delete": "آیا مطمئن هستید که می‌خواهید این قانون را حذف کنید؟ این قانون از صفحه اخیراً حذف شده توسط کاربری با نقش مدیر قابل بازیابی خواهد بود.",
+      "without-soft-delete": "حذف این قانون آن را به طور دائمی از لیست قوانین هشدار شما حذف خواهد کرد. آیا مطمئن هستید که می‌خواهید این قانون را حذف کنید؟"
+    },
+    "deleted-rules": {
+      "delete-modal": {
+        "body": "آیا مطمئن هستید که می‌خواهید این قانون هشدار را به طور دائمی حذف کنید؟ این عمل قابل بازگشت نیست.",
+        "confirm": "بله، حذف دائمی",
+        "error": "امکان حذف دائمی قانون هشدار وجود ندارد",
+        "success": "قانون هشدار به طور دائمی حذف شد",
+        "title": "حذف دائمی قانون هشدار"
+      },
+              "empty-state-title": "هیچ قانون حذف شده اخیری یافت نشد",
+              "errorloading": "بارگذاری قوانین حذف شده هشدار با خطا مواجه شد",
+        "permanently-delete": "حذف دائمی",
+              "restore": "بازگردانی",
+        "restore-deleted-manually": "قانون هشدار شما قابل بازگردانی نبود. ممکن است به دلیل تغییرات سایر موجودیت‌ها مانند نقاط تماس، منابع داده و غیره باشد. لطفاً قانون حذف شده را با ویرایش قانون و ذخیره آن به صورت دستی بازگردانید.",
+      "restore-modal": {
+        "body": "آیا مطمئن هستید که می‌خواهید این تعریف قانون هشدار حذف شده را بازگردانید؟",
+        "confirm": "بله، بازگردانی قانون حذف شده",
+        "error": "امکان بازگردانی قانون هشدار حذف شده وجود ندارد",
+        "title": "بازگردانی قانون هشدار حذف شده"
+      },
+              "table": {
+          "folder": "پوشه",
+          "group": "گروه",
+          "title": "عنوان",
+          "updated": "تاریخ حذف",
+          "updatedBy": "حذف شده توسط"
+        },
+        "unknown": "نامشخص"
+    },
+    "disabled-tooltip": {
+      "content-appear-compatible-datasources": "به نظر نمی‌رسد هیچ منبع داده سازگاری داشته باشید."
+    },
+    "draggable-rules-table": {
+      "evals-to-start-alerting": "ارزیابی‌ها برای شروع هشدار",
+      "pending-period": "دوره انتظار",
+      "recording": "ضبط",
+      "rule-name": "نام قانون"
+    },
+    "ds-group-loader": {
+      "group-deleting": "گروه در حال حذف است",
+      "group-load-failed": "بارگذاری قوانین از گروه {{ groupName }} در {{ namespaceName }} با خطا مواجه شد"
+    },
+    "duplicate-message-template": {
+      "text-loading-notification-template": "در حال بارگذاری قالب اعلان",
+      "title-error-loading-notification-template": "خطا در بارگذاری قالب اعلان"
+    },
+    "duration-quick-pick": {
+      "none": "هیچ‌کدام"
+    },
+    "dynamic-table": {
+      "tooltip-collapse-row": "جمع کردن ردیف",
+      "tooltip-expand-row": "گسترش ردیف"
+    },
+    "edit-contact-point": {
+      "text-loading": "در حال بارگذاری...",
+      "title-failed-to-fetch-contact-point": "دریافت نقطه تماس با خطا مواجه شد",
+      "title-receiver-not-found": "گیرنده یافت نشد"
+    },
+    "edit-message-template": {
+      "text-loading-template": "در حال بارگذاری قالب...",
+      "title-failed-to-fetch-notification-template": "دریافت قالب اعلان با خطا مواجه شد"
+    },
+    "edit-mute-timing-page": {
+      "text": {
+        "edit-time-interval": "ویرایش بازه زمانی"
+      }
+    },
+    "editor": {
+      "edit-alert-rule": "ویرایش قانون هشدار",
+      "edit-recording-rule": "ویرایش قانون ضبط",
+      "new-alert-rule": "قانون هشدار جدید",
+      "new-recording-rule": "قانون ضبط جدید"
+    },
+    "error-modal": {
+      "failed-to-update-your-configuration": "به‌روزرسانی پیکربندی شما با خطا مواجه شد:",
+      "title-something-went-wrong": "مشکلی پیش آمد"
+    },
+    "error-summary-button": {
+      "content-show-all-errors": "نمایش تمام خطاها"
+    },
+    "errors": {
+      "failedWith": "{{-config}} با {{status}} با خطا مواجه شد: {{-message}}"
+    },
+    "evaluate-every-validation-options": {
+      "message": {
+        "required": "ضروری است."
+      }
+    },
+    "evaluation-behavior-summary": {
+      "evaluate": "هر {{interval}}",
+      "label-evaluate": "ارزیابی",
+      "label-evaluation-time": "زمان ارزیابی",
+      "label-last-evaluation": "آخرین ارزیابی",
+      "label-metric": "متریک",
+      "label-pending-period": "دوره انتظار"
+    },
+    "evaluation-group": {
+      "label-delete": "حذف",
+      "label-export": "صادر کردن",
+      "label-reorder-rules": "مرتب‌سازی مجدد قوانین",
+      "text-provisioned": "تأمین شده"
+    },
+    "evaluation-group-creation-modal": {
+      "description-group-name": "یک گروه تمام قوانین خود را در همان بازه ارزیابی ارزیابی می‌کند.",
+      "description-often-rules-group-evaluated": "چقدر اغلب تمام قوانین در گروه ارزیابی می‌شوند.",
+      "message": {
+        "required": "ضروری است."
+      },
+      "placeholder-enter-a-name": "نامی وارد کنید",
+      "title-new-evaluation-group": "گروه ارزیابی جدید"
+    },
+    "evaluation-group-loader": {
+      "title-something-wrong-trying-fetch-group-details": "مشکلی در تلاش برای دریافت جزئیات گروه پیش آمد"
+    },
+    "evaluation-interval-limit-exceeded": {
+      "body-minimum-interval": "حداقل بازه ارزیابی <1>{{minInterval}}</1> در گرافانا پیکربندی شده است.<3></3>لطفاً با مدیر تماس بگیرید تا بازه پایین‌تری پیکربندی کند.",
+      "title-global-evaluation-interval-limit-exceeded": "محدودیت بازه ارزیابی جهانی تجاوز شده"
+    },
+    "existing-rule-editor": {
+      "sorry-permission": "متأسفانه! شما مجوز ویرایش این قانون را ندارید.",
+      "sorry-this-rule-does-not-exist": "متأسفانه! این قانون وجود ندارد.",
+      "title-cannot-edit-rule": "امکان ویرایش قانون وجود ندارد",
+      "title-failed-to-load-rule": "بارگذاری قانون با خطا مواجه شد",
+      "title-rule-not-found": "قانون یافت نشد"
+    },
+    "existing-silence-editor": {
+      "text-loading-existing-silence-information": "در حال بارگذاری اطلاعات سکوت موجود...",
+      "title-permission-editrecreate-silence": "شما مجوز ویرایش/بازسازی این سکوت را ندارید",
+      "title-silence-not-found": "سکوت موجود \"{{silenceId}}\" یافت نشد"
+    },
+    "existing-silence-editor-page": {
+      "page-nav": {
+        "text": {
+          "edit-silence": "ویرایش سکوت"
+        }
+      }
+    }
   }
 }

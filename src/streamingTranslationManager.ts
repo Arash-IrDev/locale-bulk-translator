@@ -36,7 +36,7 @@ export class StreamingTranslationManager {
     private progressBar: vscode.Progress<{ message?: string; increment?: number }> | null = null;
     private statusBarItem: vscode.StatusBarItem | null = null;
     private acceptAllItem: vscode.StatusBarItem | null = null;
-    private rejectAllItem: vscode.StatusBarItem | null = null;
+    private cancelItem: vscode.StatusBarItem | null = null;
     private tempFilePath: string | null = null;
     private originalFilePath: string | null = null;
     private diffViewer: ChunkDiffViewer;
@@ -362,9 +362,9 @@ export class StreamingTranslationManager {
         }
     }
 
-    private async showDiffViewWithAcceptReject(mergedContent: any, chunkId: string): Promise<void> {
+    private async showDiffViewWithControls(mergedContent: any, chunkId: string): Promise<void> {
         try {
-            this.logger.log(`Showing diff view with accept/reject buttons for chunk ${chunkId}...`);
+            this.logger.log(`Showing diff view with controls for chunk ${chunkId}...`);
             
             // ایجاد فایل موقت برای diff
             const tempDiffPath = path.join(os.tmpdir(), `i18n-nexus-diff-${Date.now()}.json`);
@@ -378,113 +378,19 @@ export class StreamingTranslationManager {
             
             this.logger.log('Diff view opened');
             
-            // نمایش دکمه‌های Accept/Reject برای هر تغییر در diff view
-            await this.showAcceptRejectInDiffView(mergedContent, chunkId);
+            // نمایش دکمه‌های کنترل در diff view
+            this.showControlButtonsInDiffView();
             
         } catch (error) {
-            this.logger.error(`Error showing diff view with accept/reject: ${error}`);
+            this.logger.error(`Error showing diff view with controls: ${error}`);
         }
     }
 
-    private async showAcceptRejectInDiffView(mergedContent: any, chunkId: string): Promise<void> {
-        try {
-            this.logger.log(`Showing accept/reject buttons in diff view for chunk ${chunkId}...`);
-            
-            // خواندن فایل اصلی برای مقایسه
-            let originalContent: any = {};
-            if (this.originalFilePath && fs.existsSync(this.originalFilePath)) {
-                originalContent = this.loadJsonFile(this.originalFilePath);
-            }
 
-            // نمایش دکمه‌های Accept/Reject برای هر تغییر
-            for (const [key, translatedValue] of Object.entries(mergedContent)) {
-                const originalValue = this.getNestedValue(originalContent, key);
-                
-                if (originalValue !== translatedValue) {
-                    // نمایش دکمه‌های Accept/Reject برای این تغییر
-                    this.showAcceptRejectForKey(key, translatedValue, originalValue === undefined, chunkId);
-                }
-            }
-            
-            this.logger.log(`Accept/reject buttons added for chunk ${chunkId}`);
-        } catch (error) {
-            this.logger.error(`Error showing accept/reject in diff view: ${error}`);
-        }
-    }
 
-    private showAcceptRejectForKey(key: string, translatedValue: any, isNew: boolean, chunkId: string): void {
-        try {
-            // نمایش quick pick برای انتخاب Accept یا Reject
-            vscode.window.showQuickPick(['✅ Accept', '❌ Reject'], {
-                placeHolder: `Choose action for "${key}": "${translatedValue}"`,
-                ignoreFocusOut: true
-            }).then(choice => {
-                if (choice === '✅ Accept') {
-                    this.handleAcceptChange(null, key, translatedValue, isNew);
-                } else if (choice === '❌ Reject') {
-                    this.handleRejectChange(null, key);
-                }
-            });
-            
-            this.logger.log(`Accept/reject buttons shown for key: ${key}`);
-        } catch (error) {
-            this.logger.error(`Error showing accept/reject for key ${key}: ${error}`);
-        }
-    }
 
-    private addInlineAcceptRejectButton(editor: vscode.TextEditor, range: vscode.Range, key: string, translatedValue: any, isNew: boolean): void {
-        try {
-            // ایجاد decoration برای دکمه‌های Accept/Reject
-            const decorationType = vscode.window.createTextEditorDecorationType({
-                after: {
-                    contentText: ' [CLICK HERE] ✅ Accept ❌ Reject',
-                    color: new vscode.ThemeColor('editor.foreground'),
-                    backgroundColor: new vscode.ThemeColor('diffEditor.insertedTextBackground'),
-                    border: '2px solid',
-                    borderColor: new vscode.ThemeColor('diffEditor.insertedTextBorder'),
-                    margin: '0 0 0 10px',
-                    fontWeight: 'bold'
-                }
-            });
 
-            // اعمال decoration
-            editor.setDecorations(decorationType, [range]);
-            
-            this.logger.log(`Decoration applied for key: ${key} at range: ${range.start.line}:${range.start.character} to ${range.end.line}:${range.end.character}`);
 
-            // اضافه کردن hover و click handler
-            const disposable = vscode.window.onDidChangeTextEditorSelection((event) => {
-                if (event.textEditor === editor) {
-                    const selection = event.selections[0];
-                    if (selection && range.contains(selection.active)) {
-                        // نمایش quick pick برای انتخاب Accept یا Reject
-                        vscode.window.showQuickPick(['✅ Accept', '❌ Reject'], {
-                            placeHolder: `Choose action for "${key}"`,
-                            ignoreFocusOut: true
-                        }).then(choice => {
-                            if (choice === '✅ Accept') {
-                                this.handleAcceptChange(editor, key, translatedValue, isNew);
-                            } else if (choice === '❌ Reject') {
-                                this.handleRejectChange(editor, key);
-                            }
-                            decorationType.dispose();
-                            disposable.dispose();
-                        });
-                    }
-                }
-            });
-
-            // حذف decoration بعد از 60 ثانیه
-            setTimeout(() => {
-                decorationType.dispose();
-                disposable.dispose();
-                this.logger.log(`Decoration disposed for key: ${key}`);
-            }, 60000);
-
-        } catch (error) {
-            this.logger.error(`Error adding inline accept/reject button: ${error}`);
-        }
-    }
 
     private findKeyRange(document: vscode.TextDocument, key: string): vscode.Range | null {
         const text = document.getText();
@@ -535,8 +441,8 @@ export class StreamingTranslationManager {
             }
 
             if (editor) {
-                // نمایش diff view با دکمه‌های Accept/Reject
-                await this.showDiffViewWithAcceptReject(mergedContent, chunkId);
+                // نمایش diff view با دکمه‌های Accept All و Cancel
+                await this.showDiffViewWithControls(mergedContent, chunkId);
                 
                 // فقط نمایش notification (بدون تایید)
                 vscode.window.showInformationMessage(
@@ -567,8 +473,11 @@ Translation Summary:
         
         // نمایش خلاصه به کاربر (بدون await)
         vscode.window.showInformationMessage(
-            `Translation completed: ${acceptedChunks} accepted, ${rejectedChunks} rejected`
+            `🎉 Translation completed! Total keys processed: ${results.length}`
         );
+        
+        // نمایش دکمه Accept All در پایان عملیات
+        this.showAcceptAllButtonAtEnd();
     }
 
 
@@ -652,44 +561,54 @@ Translation Summary:
                 this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
             }
             this.statusBarItem.text = "🔄 Streaming Translation...";
-            this.statusBarItem.tooltip = "Click to cancel translation";
-            this.statusBarItem.command = 'i18n-nexus.cancelTranslation';
+            this.statusBarItem.tooltip = "Translation in progress";
             this.statusBarItem.show();
-
-            // اضافه کردن دکمه‌های Accept All / Reject All در status bar
-            this.addGlobalAcceptRejectButtons();
             
-            this.logger.log('Status bar shown with global buttons');
+            this.logger.log('Status bar shown');
         } catch (error) {
             this.logger.error(`Error showing status bar: ${error}`);
         }
     }
 
-    private addGlobalAcceptRejectButtons(): void {
+    private showControlButtonsInDiffView(): void {
         try {
-            this.logger.log('Adding global accept/reject buttons to status bar...');
+            this.logger.log('Showing control buttons in diff view...');
             
-            // دکمه Accept All
-            const acceptAllItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 99);
-            acceptAllItem.text = "✅ Accept All";
-            acceptAllItem.tooltip = "Accept all translated changes";
+            // دکمه Cancel (فقط وقتی ترجمه در حال انجام است)
+            if (this.isTranslationActive) {
+                const cancelItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 99);
+                cancelItem.text = "🛑 Cancel Translation";
+                cancelItem.tooltip = "Cancel the current translation process";
+                cancelItem.command = 'i18n-nexus.cancelTranslation';
+                cancelItem.show();
+                
+                // ذخیره reference برای cleanup
+                this.cancelItem = cancelItem;
+            }
+            
+            this.logger.log('Control buttons added to diff view');
+        } catch (error) {
+            this.logger.error(`Error showing control buttons in diff view: ${error}`);
+        }
+    }
+
+    private showAcceptAllButtonAtEnd(): void {
+        try {
+            this.logger.log('Showing Accept All button at end...');
+            
+            // دکمه Accept All (در پایان عملیات)
+            const acceptAllItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 98);
+            acceptAllItem.text = "✅ Accept All Changes";
+            acceptAllItem.tooltip = "Apply all translated changes to the original file";
             acceptAllItem.command = 'i18n-nexus.acceptAllChanges';
             acceptAllItem.show();
-
-            // دکمه Reject All
-            const rejectAllItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 98);
-            rejectAllItem.text = "❌ Reject All";
-            rejectAllItem.tooltip = "Reject all translated changes";
-            rejectAllItem.command = 'i18n-nexus.rejectAllChanges';
-            rejectAllItem.show();
-
-            // ذخیره reference ها برای cleanup
-            this.acceptAllItem = acceptAllItem;
-            this.rejectAllItem = rejectAllItem;
             
-            this.logger.log('Global accept/reject buttons added to status bar');
+            // ذخیره reference برای cleanup
+            this.acceptAllItem = acceptAllItem;
+            
+            this.logger.log('Accept All button added at end');
         } catch (error) {
-            this.logger.error(`Error adding global accept/reject buttons: ${error}`);
+            this.logger.error(`Error showing Accept All button at end: ${error}`);
         }
     }
 
@@ -706,9 +625,9 @@ Translation Summary:
             this.acceptAllItem.dispose();
             this.acceptAllItem = null;
         }
-        if (this.rejectAllItem) {
-            this.rejectAllItem.dispose();
-            this.rejectAllItem = null;
+        if (this.cancelItem) {
+            this.cancelItem.dispose();
+            this.cancelItem = null;
         }
     }
 
@@ -845,42 +764,7 @@ Translation Summary:
         return path.split('.').reduce((o, i) => o ? o[i] : undefined, obj);
     }
 
-    private async handleAcceptChange(editor: vscode.TextEditor | null, key: string, translatedValue: any, isNew: boolean): Promise<void> {
-        try {
-            this.logger.log(`Accepting change for key: ${key}`);
-            
-            // اعمال تغییر به فایل اصلی
-            if (this.originalFilePath) {
-                let content = this.loadJsonFile(this.originalFilePath);
-                
-                if (isNew) {
-                    // اضافه کردن کلید جدید
-                    this.setNestedProperty(content, key, translatedValue);
-                } else {
-                    // به‌روزرسانی کلید موجود
-                    this.setNestedProperty(content, key, translatedValue);
-                }
-                
-                // نوشتن به فایل
-                fs.writeFileSync(this.originalFilePath, JSON.stringify(content, null, 2));
-                
-                this.logger.log(`Change applied for key: ${key}`);
-                vscode.window.showInformationMessage(`✅ Accepted translation for "${key}"`);
-            }
-        } catch (error) {
-            this.logger.error(`Error accepting change for key ${key}: ${error}`);
-            vscode.window.showErrorMessage(`Error accepting translation for "${key}"`);
-        }
-    }
 
-    private async handleRejectChange(editor: vscode.TextEditor | null, key: string): Promise<void> {
-        try {
-            this.logger.log(`Rejecting change for key: ${key}`);
-            vscode.window.showInformationMessage(`❌ Rejected translation for "${key}"`);
-        } catch (error) {
-            this.logger.error(`Error rejecting change for key ${key}: ${error}`);
-        }
-    }
 
     private mergeContents(baseContent: any, targetContent: any, translatedContent: any): any {
         const merged = JSON.parse(JSON.stringify(baseContent));
@@ -921,8 +805,18 @@ Translation Summary:
     }
 
     public cancelTranslation(): void {
-        this.translationCancelled = true;
         this.logger.log('Translation cancelled by user');
+        this.translationCancelled = true;
+        this.isTranslationActive = false;
+        
+        // حذف دکمه Cancel
+        if (this.cancelItem) {
+            this.cancelItem.dispose();
+            this.cancelItem = null;
+        }
+        
+        // نمایش دکمه Accept All بعد از لغو
+        this.showAcceptAllButtonAtEnd();
     }
 
     public isActive(): boolean {
@@ -933,19 +827,30 @@ Translation Summary:
         try {
             this.logger.log('Accept all changes triggered');
             if (this.tempFilePath && this.originalFilePath) {
-                // استفاده از applyFinalChanges برای اعمال تغییرات
-                this.applyFinalChanges().then(() => {
-                    this.logger.log('All changes applied to original file');
-                    vscode.window.showInformationMessage('✅ All changes applied to original file!');
-                    
-                    // cleanup
-                    this.cleanup();
-                }).catch(error => {
-                    this.logger.error(`Error applying final changes: ${error}`);
-                    vscode.window.showErrorMessage(`Error applying changes: ${error}`);
-                });
+                // بررسی وجود فایل موقت
+                if (fs.existsSync(this.tempFilePath)) {
+                    // استفاده از applyFinalChanges برای اعمال تغییرات
+                    this.applyFinalChanges().then(() => {
+                        this.logger.log('All changes applied to original file');
+                        vscode.window.showInformationMessage('✅ All changes applied to original file!');
+                        
+                        // حذف دکمه Accept All
+                        if (this.acceptAllItem) {
+                            this.acceptAllItem.dispose();
+                            this.acceptAllItem = null;
+                        }
+                        
+                        // cleanup
+                        this.cleanup();
+                    }).catch(error => {
+                        this.logger.error(`Error applying final changes: ${error}`);
+                        vscode.window.showErrorMessage(`Error applying changes: ${error}`);
+                    });
+                } else {
+                    vscode.window.showErrorMessage('No temporary file found. Translation may not have started yet.');
+                }
             } else {
-                vscode.window.showErrorMessage('No changes to apply');
+                vscode.window.showErrorMessage('No changes to apply. Please start a translation first.');
             }
         } catch (error) {
             this.logger.error(`Error accepting all changes: ${error}`);
@@ -953,16 +858,5 @@ Translation Summary:
         }
     }
 
-    public rejectAllChanges(): void {
-        try {
-            this.logger.log('Reject all changes triggered');
-            vscode.window.showInformationMessage('❌ All changes rejected');
-            
-            // cleanup
-            this.cleanup();
-        } catch (error) {
-            this.logger.error(`Error rejecting all changes: ${error}`);
-            vscode.window.showErrorMessage(`Error rejecting changes: ${error}`);
-        }
-    }
+
 } 
