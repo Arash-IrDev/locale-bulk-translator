@@ -262,8 +262,13 @@ describe('StreamingTranslationManager', () => {
 
         it('should apply chunk to file correctly', async () => {
             const mockResult = {
+                chunkId: 'chunk_1',
+                originalContent: { key1: 'value1' },
                 translatedContent: { key1: 'translated1' },
-                tokensUsed: { inputTokens: 10, outputTokens: 5 }
+                tokensUsed: { inputTokens: 10, outputTokens: 5 },
+                startLine: 0,
+                endLine: 10,
+                applied: false
             };
 
             // Mock temp file path

@@ -339,14 +339,42 @@ export class ChunkedTranslationManager {
         return path.split('.').reduce((o, i) => o ? o[i] : undefined, obj);
     }
 
+    /**
+     * تبدیل محتوای nested به ساختار flat اصلی
+     */
+    private flattenNestedContent(nestedContent: any, prefix: string = ''): any {
+        const flattened: any = {};
+        
+        for (const key in nestedContent) {
+            const value = nestedContent[key];
+            const fullKey = prefix ? `${prefix}.${key}` : key;
+            
+            if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                // اگر مقدار یک object است، آن را recursively flatten کنیم
+                const subFlattened = this.flattenNestedContent(value, fullKey);
+                Object.assign(flattened, subFlattened);
+            } else {
+                // اگر مقدار primitive است، کلید کامل را استفاده کنیم
+                flattened[fullKey] = value;
+            }
+        }
+        
+        return flattened;
+    }
+
     private mergeContents(baseContent: any, targetContent: any, translatedContent: any): any {
         const merged = JSON.parse(JSON.stringify(baseContent));
 
-        for (const key in translatedContent) {
-            if (translatedContent[key] === null) {
+        // تبدیل translatedContent به flat structure برای پردازش آسان‌تر
+        const flatTranslated = this.flattenNestedContent(translatedContent);
+
+        for (const key in flatTranslated) {
+            if (flatTranslated[key] === null) {
+                // حذف کلید از ساختار nested
                 this.deleteNestedProperty(merged, key);
             } else {
-                this.setNestedProperty(merged, key, translatedContent[key]);
+                // اضافه کردن یا به‌روزرسانی کلید در ساختار nested
+                this.setNestedProperty(merged, key, flatTranslated[key]);
             }
         }
 

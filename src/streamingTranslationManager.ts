@@ -311,8 +311,11 @@ export class StreamingTranslationManager {
             
             this.logger.log(`Current temp file has ${Object.keys(currentContent).length} keys`);
             
+            // تبدیل پاسخ LLM به ساختار اصلی
+            const convertedResponse = this.convertLLMResponseToOriginalStructureNew(result.translatedContent, result.originalContent);
+            
             // ادغام تغییرات جدید با محتوای موجود
-            const mergedContent = this.mergeContents(currentContent, {}, result.translatedContent);
+            const mergedContent = this.mergeContents(currentContent, {}, convertedResponse);
             
             this.logger.log(`Merged content has ${Object.keys(mergedContent).length} keys`);
             
@@ -847,15 +850,125 @@ Translation Summary:
     private mergeContents(baseContent: any, targetContent: any, translatedContent: any): any {
         const merged = JSON.parse(JSON.stringify(baseContent));
 
-        for (const key in translatedContent) {
-            if (translatedContent[key] === null) {
+        // تبدیل translatedContent به flat structure برای پردازش آسان‌تر
+        const flatTranslated = this.flattenNestedContent(translatedContent);
+
+        for (const key in flatTranslated) {
+            if (flatTranslated[key] === null) {
+                // حذف کلید از ساختار nested
                 this.deleteNestedProperty(merged, key);
             } else {
-                this.setNestedProperty(merged, key, translatedContent[key]);
+                // اضافه کردن یا به‌روزرسانی کلید در ساختار nested
+                this.setNestedProperty(merged, key, flatTranslated[key]);
             }
         }
 
         return merged;
+    }
+
+    /**
+     * تبدیل محتوای nested به ساختار flat اصلی
+     */
+    private flattenNestedContent(nestedContent: any, prefix: string = ''): any {
+        const flattened: any = {};
+        
+        for (const key in nestedContent) {
+            const value = nestedContent[key];
+            const fullKey = prefix ? `${prefix}.${key}` : key;
+            
+            if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                // اگر مقدار یک object است، آن را recursively flatten کنیم
+                const subFlattened = this.flattenNestedContent(value, fullKey);
+                Object.assign(flattened, subFlattened);
+            } else {
+                // اگر مقدار primitive است، کلید کامل را استفاده کنیم
+                flattened[fullKey] = value;
+            }
+        }
+        
+        return flattened;
+    }
+
+    /**
+     * تبدیل ساختار flat به nested object
+     */
+    private unflattenContent(flatContent: any): any {
+        const nested: any = {};
+        
+        for (const key in flatContent) {
+            const value = flatContent[key];
+            const keyParts = key.split('.');
+            
+            let current = nested;
+            for (let i = 0; i < keyParts.length - 1; i++) {
+                const part = keyParts[i];
+                if (!(part in current)) {
+                    current[part] = {};
+                }
+                current = current[part];
+            }
+            
+            const lastPart = keyParts[keyParts.length - 1];
+            current[lastPart] = value;
+        }
+        
+        return nested;
+    }
+
+    /**
+     * تبدیل پاسخ LLM به ساختار اصلی - Updated version
+     */
+    private convertLLMResponseToOriginalStructure(llmResponse: any, originalChunk: any): any {
+        this.logger.log(`Converting LLM response to original structure...`);
+        this.logger.log(`Original chunk keys: ${Object.keys(originalChunk).join(', ')}`);
+        this.logger.log(`LLM response keys: ${Object.keys(llmResponse).join(', ')}`);
+        
+        // ابتدا LLM response را به flat structure تبدیل می‌کنیم
+        const flattenedResponse = this.flattenNestedContent(llmResponse);
+        this.logger.log(`Flattened response keys: ${Object.keys(flattenedResponse).join(', ')}`);
+        
+        // حالا باید ساختار اصلی را بازسازی کنیم
+        const result: any = {};
+        
+        for (const originalKey in originalChunk) {
+            if (flattenedResponse.hasOwnProperty(originalKey)) {
+                result[originalKey] = flattenedResponse[originalKey];
+            } else {
+                // اگر کلید در پاسخ LLM نبود، از original استفاده کنیم
+                result[originalKey] = originalChunk[originalKey];
+            }
+        }
+        
+        this.logger.log(`Final result keys: ${Object.keys(result).join(', ')}`);
+        return result;
+    }
+
+    /**
+     * تبدیل پاسخ LLM به ساختار اصلی - New improved version
+     */
+    private convertLLMResponseToOriginalStructureNew(llmResponse: any, originalChunk: any): any {
+        this.logger.log(`Converting LLM response to original structure (new method)...`);
+        this.logger.log(`Original chunk keys: ${Object.keys(originalChunk).join(', ')}`);
+        this.logger.log(`LLM response keys: ${Object.keys(llmResponse).join(', ')}`);
+        
+        // ابتدا LLM response را به flat structure تبدیل می‌کنیم
+        const flattenedResponse = this.flattenNestedContent(llmResponse);
+        this.logger.log(`Flattened response keys: ${Object.keys(flattenedResponse).join(', ')}`);
+        
+        // حالا باید ساختار اصلی را بازسازی کنیم
+        const result: any = {};
+        
+        for (const originalKey in originalChunk) {
+            if (flattenedResponse.hasOwnProperty(originalKey)) {
+                result[originalKey] = flattenedResponse[originalKey];
+            } else {
+                // اگر کلید در پاسخ LLM نبود، از original استفاده کنیم
+                result[originalKey] = originalChunk[originalKey];
+            }
+        }
+        
+        this.logger.log(`Final result keys: ${Object.keys(result).join(', ')}`);
+        return result;
     }
 
     private setNestedProperty(obj: any, path: string, value: any) {
