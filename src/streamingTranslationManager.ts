@@ -39,6 +39,7 @@ export class StreamingTranslationManager {
     private cancelItem: vscode.StatusBarItem | null = null;
     private tempFilePath: string | null = null;
     private originalFilePath: string | null = null;
+    private progressBarResolve: (() => void) | null = null;
     private diffViewer: ChunkDiffViewer;
 
     constructor(logger: Logger, channel: vscode.OutputChannel) {
@@ -49,7 +50,7 @@ export class StreamingTranslationManager {
         
         // دریافت تنظیمات
         const config = vscode.workspace.getConfiguration('i18nNexus');
-        this.chunkSize = config.get<number>('chunkSize', 50);
+        this.chunkSize = config.get<number>('chunkSize', 3000); // حداکثر 3000 کاراکتر در هر chunk برای gpt-4o-mini
         this.autoSaveInterval = config.get<number>('autoSaveInterval', 100);
     }
 
@@ -122,7 +123,7 @@ export class StreamingTranslationManager {
 
             // تقسیم به چانک‌ها
             const chunks = this.splitIntoChunks(toTranslate, this.chunkSize);
-            this.logger.log(`Split content into ${chunks.length} chunks`);
+            this.logger.log(`Split content into ${chunks.length} chunks from ${Object.keys(toTranslate).length} total keys`);
 
             // ایجاد فایل موقت برای ترجمه
             this.tempFilePath = this.createTempFile(filePath, targetContent);
@@ -193,17 +194,27 @@ export class StreamingTranslationManager {
             this.logger.log(`Translation loop completed. Processed ${results.length} chunks.`);
 
             if (!this.translationCancelled && results.length > 0) {
-                this.logger.log('Translation completed successfully, showing final summary...');
+                this.logger.log(`Translation loop completed. Processed ${results.length} chunks, ${acceptedChunks} accepted, ${rejectedChunks} rejected.`);
                 
-                // نمایش خلاصه نهایی
-                await this.showFinalSummary(results, totalTokens, acceptedChunks, rejectedChunks);
-                
-                this.logger.log('Translation completed - use Accept All or Reject All buttons in status bar');
-                
-                // نمایش پیام نهایی بدون popup
-                vscode.window.showInformationMessage(
-                    `Translation completed! ${acceptedChunks} chunks processed. Use Accept All or Reject All buttons in status bar.`
-                );
+                if (acceptedChunks > 0) {
+                    this.logger.log('Translation completed successfully, showing final summary...');
+                    
+                    // نمایش خلاصه نهایی
+                    await this.showFinalSummary(results, totalTokens, acceptedChunks, rejectedChunks);
+                    
+                    this.logger.log('Translation completed - use Accept All or Reject All buttons in status bar');
+                    
+                    // نمایش پیام نهایی بدون popup
+                    vscode.window.showInformationMessage(
+                        `Translation completed! ${acceptedChunks} chunks processed successfully, ${rejectedChunks} failed. Use Accept All or Reject All buttons in status bar.`
+                    );
+                } else {
+                    this.logger.log('No chunks were successfully translated');
+                    vscode.window.showWarningMessage(
+                        `Translation failed! All ${results.length} chunks failed to translate. Please check the logs for details.`
+                    );
+                    this.cleanup();
+                }
                 
                 // cleanup فقط وقتی کاربر تصمیم نهایی گرفت (با دکمه‌های Accept All/Reject All)
             } else if (this.translationCancelled) {
@@ -282,6 +293,14 @@ export class StreamingTranslationManager {
         }
 
         try {
+            // بررسی اعتبار محتوای ترجمه شده
+            if (!result.translatedContent || 
+                typeof result.translatedContent !== 'object' || 
+                Object.keys(result.translatedContent).length === 0) {
+                this.logger.warn(`Chunk ${result.chunkId} has invalid or empty translated content`);
+                return false;
+            }
+
             this.logger.log(`Reading current temp file: ${this.tempFilePath}`);
             
             // خواندن محتوای فعلی فایل موقت
@@ -292,7 +311,7 @@ export class StreamingTranslationManager {
             
             this.logger.log(`Current temp file has ${Object.keys(currentContent).length} keys`);
             
-            // ادغام تغییرات
+            // ادغام تغییرات جدید با محتوای موجود
             const mergedContent = this.mergeContents(currentContent, {}, result.translatedContent);
             
             this.logger.log(`Merged content has ${Object.keys(mergedContent).length} keys`);
@@ -302,10 +321,12 @@ export class StreamingTranslationManager {
             
             this.logger.log(`Successfully wrote chunk ${result.chunkId} to temp file`);
             
-            // نمایش live diff و به‌روزرسانی فایل اصلی
-            this.logger.log(`About to show live diff for chunk ${result.chunkId}...`);
-            await this.showLiveDiffAndUpdate(mergedContent, result.chunkId);
-            this.logger.log(`Live diff completed for chunk ${result.chunkId}`);
+            // نمایش diff view با دکمه‌های کنترل (non-blocking)
+            this.logger.log(`About to show diff view for chunk ${result.chunkId}...`);
+            this.showDiffViewWithControls(mergedContent, result.chunkId).catch(error => {
+                this.logger.error(`Error showing diff view for chunk ${result.chunkId}: ${error}`);
+            });
+            this.logger.log(`Diff view initiated for chunk ${result.chunkId}`);
             
             return true;
         } catch (error) {
@@ -364,22 +385,41 @@ export class StreamingTranslationManager {
 
     private async showDiffViewWithControls(mergedContent: any, chunkId: string): Promise<void> {
         try {
-            this.logger.log(`Showing diff view with controls for chunk ${chunkId}...`);
+            this.logger.log(`=== Showing diff view for chunk ${chunkId} ===`);
+            this.logger.log(`Merged content keys for diff: ${Object.keys(mergedContent).join(', ')}`);
             
-            // ایجاد فایل موقت برای diff
-            const tempDiffPath = path.join(os.tmpdir(), `i18n-nexus-diff-${Date.now()}.json`);
+            // ایجاد فایل موقت برای diff با نام منحصر به فرد
+            const timestamp = Date.now();
+            const uniqueId = `${timestamp}-${chunkId}-${Math.random().toString(36).substr(2, 9)}`;
+            const tempDiffPath = path.join(os.tmpdir(), `i18n-nexus-diff-${uniqueId}.json`);
             fs.writeFileSync(tempDiffPath, JSON.stringify(mergedContent, null, 2));
             
             const originalUri = vscode.Uri.file(this.originalFilePath!);
             const diffUri = vscode.Uri.file(tempDiffPath);
             
-            // باز کردن diff view
-            await vscode.commands.executeCommand('vscode.diff', originalUri, diffUri, `Live Translation Progress - ${chunkId}`);
+            this.logger.log(`Original URI: ${originalUri.fsPath}`);
+            this.logger.log(`Diff URI: ${diffUri.fsPath}`);
+            this.logger.log(`Unique ID: ${uniqueId}`);
             
-            this.logger.log('Diff view opened');
+            // نمایش دکمه‌های کنترل در status bar (قبل از باز کردن diff view)
+            this.showControlButtonsInStatusBar();
             
-            // نمایش دکمه‌های کنترل در diff view
-            this.showControlButtonsInDiffView();
+            // کمی تاخیر برای اطمینان از باز شدن diff view جدید
+            await this.delay(50);
+            
+            // باز کردن diff view جدید
+            try {
+                await vscode.commands.executeCommand('vscode.diff', originalUri, diffUri, `Live Translation Progress - ${chunkId} (${uniqueId})`);
+                this.logger.log('Diff view opened successfully');
+            } catch (diffError) {
+                this.logger.error(`Error opening diff view: ${diffError}`);
+                // اگر diff view باز نشد، حداقل notification نمایش دهیم
+                vscode.window.showInformationMessage(
+                    `Chunk ${chunkId} translated! Total keys: ${Object.keys(mergedContent).length}`
+                );
+            }
+            
+            this.logger.log(`=== Finished showing diff view for chunk ${chunkId} ===`);
             
         } catch (error) {
             this.logger.error(`Error showing diff view with controls: ${error}`);
@@ -471,6 +511,12 @@ Translation Summary:
 
         this.outputChannel.appendLine(summary);
         
+        // بستن progress bar
+        if (this.progressBarResolve) {
+            this.progressBarResolve();
+            this.progressBarResolve = null;
+        }
+        
         // نمایش خلاصه به کاربر (بدون await)
         vscode.window.showInformationMessage(
             `🎉 Translation completed! Total keys processed: ${results.length}`
@@ -522,13 +568,17 @@ Translation Summary:
         const progress = Math.round((currentChunk / totalChunks) * 100);
         const message = `Translating ${chunkId} (${currentChunk}/${totalChunks}) - ${progress}% - Accepted: ${acceptedChunks}, Rejected: ${rejectedChunks}`;
         
+        // به‌روزرسانی progress bar
         if (this.progressBar) {
-            this.progressBar.report({ message, increment: 100 / totalChunks });
+            this.progressBar.report({ 
+                message, 
+                increment: 0 // increment را 0 قرار می‌دهیم تا progress bar درست کار کند
+            });
         }
 
         // به‌روزرسانی status bar
         if (this.statusBarItem) {
-            this.statusBarItem.text = `$(sync~spin) ${progress}% (${acceptedChunks}/${rejectedChunks})`;
+            this.statusBarItem.text = `🔄 ${progress}% (${currentChunk}/${totalChunks})`;
         }
 
         this.outputChannel.appendLine(message);
@@ -548,8 +598,11 @@ Translation Summary:
             this.progressBar = progress;
             this.showStatusBar();
 
-            // فقط progress bar را نمایش می‌دهیم و منتظر نمی‌مانیم
-            // ترجمه در background ادامه می‌یابد
+            // منتظر می‌مانیم تا ترجمه تمام شود
+            return new Promise<void>((resolve) => {
+                // این promise در پایان ترجمه resolve می‌شود
+                this.progressBarResolve = resolve;
+            });
         });
     }
 
@@ -570,9 +623,9 @@ Translation Summary:
         }
     }
 
-    private showControlButtonsInDiffView(): void {
+    private showControlButtonsInStatusBar(): void {
         try {
-            this.logger.log('Showing control buttons in diff view...');
+            this.logger.log('Showing control buttons in status bar...');
             
             // دکمه Cancel (فقط وقتی ترجمه در حال انجام است)
             if (this.isTranslationActive) {
@@ -586,9 +639,9 @@ Translation Summary:
                 this.cancelItem = cancelItem;
             }
             
-            this.logger.log('Control buttons added to diff view');
+            this.logger.log('Control buttons added to status bar');
         } catch (error) {
-            this.logger.error(`Error showing control buttons in diff view: ${error}`);
+            this.logger.error(`Error showing control buttons in status bar: ${error}`);
         }
     }
 
@@ -690,17 +743,42 @@ Translation Summary:
         const chunks: any[] = [];
         const keys = Object.keys(obj);
         
-        for (let i = 0; i < keys.length; i += chunkSize) {
-            const chunk: any = {};
-            const chunkKeys = keys.slice(i, i + chunkSize);
+        this.logger.log(`Splitting ${keys.length} keys into character-based chunks (max ${chunkSize} chars per chunk)`);
+        
+        let currentChunk: any = {};
+        let currentChunkSize = 0;
+        const maxChunkSize = chunkSize; // این حالا تعداد کاراکترها است، نه تعداد کلیدها
+        
+        for (const key of keys) {
+            const keyValue = { [key]: obj[key] };
+            const keyValueStr = JSON.stringify(keyValue, null, 2);
+            const keyValueSize = keyValueStr.length;
             
-            for (const key of chunkKeys) {
-                chunk[key] = obj[key];
+            // اگر اضافه کردن این کلید باعث بزرگ شدن chunk می‌شود
+            if (currentChunkSize + keyValueSize > maxChunkSize && Object.keys(currentChunk).length > 0) {
+                // ذخیره chunk فعلی
+                const chunkStr = JSON.stringify(currentChunk, null, 2);
+                this.logger.log(`Chunk ${chunks.length + 1} created: ${chunkStr.length} chars, ${Object.keys(currentChunk).length} keys`);
+                chunks.push({ ...currentChunk });
+                
+                // شروع chunk جدید
+                currentChunk = { [key]: obj[key] };
+                currentChunkSize = keyValueSize;
+            } else {
+                // اضافه کردن به chunk فعلی
+                currentChunk[key] = obj[key];
+                currentChunkSize += keyValueSize;
             }
-            
-            chunks.push(chunk);
         }
         
+        // اضافه کردن آخرین chunk
+        if (Object.keys(currentChunk).length > 0) {
+            const chunkStr = JSON.stringify(currentChunk, null, 2);
+            this.logger.log(`Final chunk ${chunks.length + 1} created: ${chunkStr.length} chars, ${Object.keys(currentChunk).length} keys`);
+            chunks.push(currentChunk);
+        }
+        
+        this.logger.log(`Created ${chunks.length} chunks total`);
         return chunks;
     }
 
@@ -808,6 +886,12 @@ Translation Summary:
         this.logger.log('Translation cancelled by user');
         this.translationCancelled = true;
         this.isTranslationActive = false;
+        
+        // بستن progress bar
+        if (this.progressBarResolve) {
+            this.progressBarResolve();
+            this.progressBarResolve = null;
+        }
         
         // حذف دکمه Cancel
         if (this.cancelItem) {
