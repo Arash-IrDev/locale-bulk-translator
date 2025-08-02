@@ -42,6 +42,7 @@ export class StreamingTranslationManager {
     private originalFilePath: string | null = null;
     private progressBarResolve: (() => void) | null = null;
     private diffViewer: ChunkDiffViewer;
+    private allChangesFlat: Record<string, string | null> = {};
 
     constructor(logger: Logger, channel: vscode.OutputChannel) {
         this.llmService = new LLMService(logger, channel);
@@ -134,6 +135,7 @@ export class StreamingTranslationManager {
 
             // ایجاد فایل موقت برای ترجمه
             this.tempFilePath = this.createTempFile(filePath, targetContent);
+            this.allChangesFlat = this.flattenNestedContent(targetContent);
 
             // شروع ترجمه استریمینگ
             const results: StreamingTranslationResult[] = [];
@@ -308,33 +310,26 @@ export class StreamingTranslationManager {
                 return false;
             }
 
-            this.logger.log(`Reading current temp file: ${this.tempFilePath}`);
-            
-            // خواندن محتوای فعلی فایل موقت
-            let currentContent: any = {};
-            if (fs.existsSync(this.tempFilePath)) {
-                currentContent = this.loadJsonFile(this.tempFilePath);
-            }
-            
-            this.logger.log(`Current temp file has ${Object.keys(currentContent).length} keys`);
-            
-            // تبدیل پاسخ LLM به ساختار اصلی
-            const convertedResponse = this.convertLLMResponseToOriginalStructureNew(result.translatedContent, result.originalContent);
-            
-            // ادغام تغییرات جدید با محتوای موجود
-            const mergedContent = this.mergeContents(currentContent, {}, convertedResponse);
-            
-            this.logger.log(`Merged content has ${Object.keys(mergedContent).length} keys`);
-            
+            // تبدیل پاسخ LLM به ساختار flat
+            const flatTranslated = this.flattenNestedContent(result.translatedContent);
+
+            // ادغام تغییرات جدید با وضعیت کلی
+            this.allChangesFlat = {
+                ...this.allChangesFlat,
+                ...flatTranslated
+            };
+
+            // بازسازی محتوای کامل
+            const mergedContent = this.unflattenContent(this.allChangesFlat);
+
             // نوشتن به فایل موقت
             fs.writeFileSync(this.tempFilePath, JSON.stringify(mergedContent, null, 2));
-            
+
             this.logger.log(`Successfully wrote chunk ${result.chunkId} to temp file`);
-            
-            // نمایش diff view با دکمه‌های کنترل (non-blocking)
-            // فقط تغییرات ترجمه شده را برای diff view ارسال می‌کنیم
+
+            // نمایش diff view با محتوای تجمیع شده
             this.logger.log(`About to show diff view for chunk ${result.chunkId}...`);
-            this.showDiffViewWithControls(convertedResponse, result.chunkId).catch(error => {
+            this.showDiffViewWithControls(mergedContent, result.chunkId).catch(error => {
                 this.logger.error(`Error showing diff view for chunk ${result.chunkId}: ${error}`);
             });
             this.logger.log(`Diff view initiated for chunk ${result.chunkId}`);
@@ -394,56 +389,34 @@ export class StreamingTranslationManager {
         }
     }
 
-    private async showDiffViewWithControls(translatedChanges: any, chunkId: string): Promise<void> {
+    private async showDiffViewWithControls(mergedContent: any, chunkId: string): Promise<void> {
         try {
             this.logger.log(`=== Showing diff view for chunk ${chunkId} ===`);
-            this.logger.log(`Translated changes keys for diff: ${Object.keys(translatedChanges).join(', ')}`);
-            
+
             if (!this.originalFilePath) {
                 this.logger.error('Original file path not found for diff view');
                 return;
             }
-            
-            // خواندن فایل اصلی
-            let originalContent: any = {};
-            if (fs.existsSync(this.originalFilePath)) {
-                originalContent = this.loadJsonFile(this.originalFilePath);
-            }
-            
-            this.logger.log(`Original content has ${Object.keys(originalContent).length} keys`);
-            this.logger.log(`Translated changes has ${Object.keys(translatedChanges).length} keys`);
-            
-            // ایجاد محتوای جدید با اعمال تغییرات ترجمه شده به فایل اصلی
-            const newContent = JSON.parse(JSON.stringify(originalContent));
-            
-            // اعمال تغییرات ترجمه شده به محتوای جدید
-            for (const key in translatedChanges) {
-                if (translatedChanges[key] === null) {
-                    this.deleteNestedProperty(newContent, key);
-                } else {
-                    this.setNestedProperty(newContent, key, translatedChanges[key]);
-                }
-            }
-            
+
             // ایجاد فایل موقت برای diff با نام منحصر به فرد
             const timestamp = Date.now();
             const uniqueId = `${timestamp}-${chunkId}-${Math.random().toString(36).substr(2, 9)}`;
             const tempDiffPath = path.join(os.tmpdir(), `i18n-nexus-diff-${uniqueId}.json`);
-            fs.writeFileSync(tempDiffPath, JSON.stringify(newContent, null, 2));
-            
+            fs.writeFileSync(tempDiffPath, JSON.stringify(mergedContent, null, 2));
+
             const originalUri = vscode.Uri.file(this.originalFilePath);
             const diffUri = vscode.Uri.file(tempDiffPath);
-            
+
             this.logger.log(`Original URI: ${originalUri.fsPath}`);
             this.logger.log(`Diff URI: ${diffUri.fsPath}`);
             this.logger.log(`Unique ID: ${uniqueId}`);
-            
+
             // نمایش دکمه‌های کنترل در status bar (قبل از باز کردن diff view)
             this.showControlButtonsInStatusBar();
-            
+
             // کمی تاخیر برای اطمینان از باز شدن diff view جدید
             await this.delay(50);
-            
+
             // باز کردن diff view جدید
             try {
                 await vscode.commands.executeCommand('vscode.diff', originalUri, diffUri, `Live Translation Progress - ${chunkId} (${uniqueId})`);
@@ -452,12 +425,12 @@ export class StreamingTranslationManager {
                 this.logger.error(`Error opening diff view: ${diffError}`);
                 // اگر diff view باز نشد، حداقل notification نمایش دهیم
                 vscode.window.showInformationMessage(
-                    `Chunk ${chunkId} translated! Total keys: ${Object.keys(translatedChanges).length}`
+                    `Chunk ${chunkId} translated! Total keys: ${Object.keys(mergedContent).length}`
                 );
             }
-            
+
             this.logger.log(`=== Finished showing diff view for chunk ${chunkId} ===`);
-            
+
         } catch (error) {
             this.logger.error(`Error showing diff view with controls: ${error}`);
         }
@@ -738,6 +711,7 @@ Translation Summary:
 
         this.tempFilePath = null;
         this.originalFilePath = null;
+        this.allChangesFlat = {};
     }
 
     private delay(ms: number): Promise<void> {
