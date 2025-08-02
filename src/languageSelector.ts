@@ -16,10 +16,10 @@ export class LanguageSelector {
         { label: "🇩🇪 Deutsch", code: "de", selected: false, description: "" },
         { label: "🇯🇵 Japanese", code: "ja", selected: false, description: "" },
         { label: "🇰🇷 한국어", code: "ko", selected: false, description: "" },
-        { label: "🇸🇦 العربية", code: "ar", selected: false, description: "" },
+        { label: "🇸🇦 Arabic", code: "ar", selected: false, description: "" },
         { label: "🇵🇹 Português", code: "pt", selected: false, description: "" },
         { label: "🇷🇺 Русский", code: "ru", selected: false, description: "" },
-        { label: "🇮🇷 فارسی", code: "fa", selected: false, description: "" }
+        { label: "🇮🇷 Farsi", code: "fa", selected: false, description: "" }
     ];
 
     private logger: Logger;

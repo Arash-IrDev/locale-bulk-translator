@@ -56,8 +56,8 @@ describe('Extension', () => {
 
     describe('File validation', () => {
         it('should validate translation files correctly', () => {
-            // این تست تابع isValidTranslationFile را که در extension.ts تعریف شده بررسی می‌کند
-            // ما نمی‌توانیم مستقیماً به آن تابع دسترسی داشته باشیم، اما می‌توانیم منطق آن را تست کنیم
+            // This test checks the isValidTranslationFile function defined in extension.ts
+            // We cannot directly access that function, but we can test its logic
             
             const isValidTranslationFile = (filePath: string): boolean => {
                 return !filePath.includes('extension-output') && 
@@ -65,12 +65,12 @@ describe('Extension', () => {
                        filePath.endsWith('.json');
             };
 
-            // تست فایل‌های معتبر
+            // Test valid files
             expect(isValidTranslationFile('/test/workspace/messages/en.json')).toBe(true);
             expect(isValidTranslationFile('/test/workspace/messages/fa.json')).toBe(true);
             expect(isValidTranslationFile('/test/workspace/translations/es.json')).toBe(true);
 
-            // تست فایل‌های نامعتبر
+            // Test invalid files
             expect(isValidTranslationFile('/test/extension-output/file.json')).toBe(false);
             expect(isValidTranslationFile('/test/i18n Nexus/file.json')).toBe(false);
             expect(isValidTranslationFile('/test/workspace/messages/en.txt')).toBe(false);
@@ -118,7 +118,7 @@ describe('Extension', () => {
 
     describe('Command registration', () => {
         it('should register all required commands', () => {
-            // این تست بررسی می‌کند که همه دستورات لازم ثبت شده‌اند
+            // This test checks that all required commands are registered
             const expectedCommands = [
                 'i18n-nexus.showConfig',
                 'i18n-nexus.configureModel',
@@ -128,8 +128,8 @@ describe('Extension', () => {
                 'i18n-nexus.openSettings'
             ];
 
-            // در واقعیت، این دستورات در activate function ثبت می‌شوند
-            // این تست فقط برای مستندسازی است
+            // In reality, these commands are registered in the activate function
+            // This test is for documentation purposes
             expect(expectedCommands).toHaveLength(6);
         });
     });

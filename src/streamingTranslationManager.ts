@@ -624,15 +624,15 @@ Translation Summary:
         const progress = Math.round((currentChunk / totalChunks) * 100);
         const message = `Translating ${chunkId} (${currentChunk}/${totalChunks}) - ${progress}% - Accepted: ${acceptedChunks}, Rejected: ${rejectedChunks}`;
         
-        // به‌روزرسانی progress bar
+        // Update progress bar
         if (this.progressBar) {
             this.progressBar.report({ 
                 message, 
-                increment: 0 // increment را 0 قرار می‌دهیم تا progress bar درست کار کند
+                increment: 0 // Set increment to 0 so the progress bar works correctly
             });
         }
 
-        // به‌روزرسانی status bar
+        // Update status bar
         if (this.statusBarItem) {
             this.statusBarItem.text = `🔄 ${progress}% (${currentChunk}/${totalChunks})`;
         }
@@ -654,9 +654,9 @@ Translation Summary:
             this.progressBar = progress;
             this.showStatusBar();
 
-            // منتظر می‌مانیم تا ترجمه تمام شود
+            // Wait until translation is finished
             return new Promise<void>((resolve) => {
-                // این promise در پایان ترجمه resolve می‌شود
+                // This promise will be resolved at the end of translation
                 this.progressBarResolve = resolve;
             });
         });
@@ -683,7 +683,7 @@ Translation Summary:
         try {
             this.logger.log('Showing control buttons in status bar...');
             
-            // دکمه Cancel (فقط وقتی ترجمه در حال انجام است)
+            // Cancel button (only when translation is in progress)
             if (this.isTranslationActive) {
                 const cancelItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 99);
                 cancelItem.text = "🛑 Cancel Translation";
@@ -691,7 +691,7 @@ Translation Summary:
                 cancelItem.command = 'i18n-nexus.cancelTranslation';
                 cancelItem.show();
                 
-                // ذخیره reference برای cleanup
+                // Save reference for cleanup
                 this.cancelItem = cancelItem;
             }
             
@@ -705,14 +705,14 @@ Translation Summary:
         try {
             this.logger.log('Showing Accept All button at end...');
             
-            // دکمه Accept All (در پایان عملیات)
+            // Accept All button (at the end of the operation)
             const acceptAllItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 98);
             acceptAllItem.text = "✅ Accept All Changes";
             acceptAllItem.tooltip = "Apply all translated changes to the original file";
             acceptAllItem.command = 'i18n-nexus.acceptAllChanges';
             acceptAllItem.show();
             
-            // ذخیره reference برای cleanup
+            // Save reference for cleanup
             this.acceptAllItem = acceptAllItem;
             
             this.logger.log('Accept All button added at end');
@@ -741,7 +741,7 @@ Translation Summary:
     }
 
     private cleanup(): void {
-        // پاک کردن فایل موقت
+        // Clean up temporary file
         if (this.tempFilePath && fs.existsSync(this.tempFilePath)) {
             try {
                 fs.unlinkSync(this.tempFilePath);
@@ -751,7 +751,7 @@ Translation Summary:
             }
         }
 
-        // پاک کردن فایل‌های diff
+        // Clean up diff files
         for (const diffPath of this.diffTempFiles) {
             try {
                 if (fs.existsSync(diffPath)) {
@@ -773,7 +773,7 @@ Translation Summary:
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
-    // متدهای کمکی از کلاس قبلی
+    // Helper methods from previous class
     private async translateChunk(
         chunk: any, 
         lang: string, 
@@ -796,13 +796,13 @@ Translation Summary:
             // this.logger.log(`Chunk ${chunkId} translated structure: ${Object.keys(result.translatedContent).length} keys`);
             // this.logger.log(`Chunk ${chunkId} translated sample: ${Object.keys(result.translatedContent).slice(0, 2).join(', ')}`);
 
-            // بازسازی ساختار اصلی و حذف prefix های تکراری
+            // Reconstruct original structure and remove duplicate prefixes
             const normalizedChunk = this.convertLLMResponseToOriginalStructureNew(
                 result.translatedContent,
                 chunk
             );
 
-            // تبدیل نتیجه نهایی به ساختار flat
+            // Convert final result to flat structure
             const flatTranslated = this.flattenNestedContent(normalizedChunk);
 
             // Log the three key structures for comparison
@@ -832,31 +832,31 @@ Translation Summary:
         
         let currentChunk: any = {};
         let currentChunkSize = 0;
-        const maxChunkSize = chunkSize; // این حالا تعداد کاراکترها است، نه تعداد کلیدها
+        const maxChunkSize = chunkSize; // This is now the number of characters, not the number of keys
         
         for (const key of keys) {
             const keyValue = { [key]: obj[key] };
             const keyValueStr = JSON.stringify(keyValue, null, 2);
             const keyValueSize = keyValueStr.length;
             
-            // اگر اضافه کردن این کلید باعث بزرگ شدن chunk می‌شود
+            // If adding this key would cause the chunk to grow
             if (currentChunkSize + keyValueSize > maxChunkSize && Object.keys(currentChunk).length > 0) {
-                // ذخیره chunk فعلی
+                // Save current chunk
                 const chunkStr = JSON.stringify(currentChunk, null, 2);
                 // this.logger.log(`Chunk ${chunks.length + 1} created: ${chunkStr.length} chars, ${Object.keys(currentChunk).length} keys`);
                 chunks.push({ ...currentChunk });
                 
-                // شروع chunk جدید
+                // Start new chunk
                 currentChunk = { [key]: obj[key] };
                 currentChunkSize = keyValueSize;
             } else {
-                // اضافه کردن به chunk فعلی
+                // Add to current chunk
                 currentChunk[key] = obj[key];
                 currentChunkSize += keyValueSize;
             }
         }
         
-        // اضافه کردن آخرین chunk
+        // Add final chunk
         if (Object.keys(currentChunk).length > 0) {
             const chunkStr = JSON.stringify(currentChunk, null, 2);
             // this.logger.log(`Final chunk ${chunks.length + 1} created: ${chunkStr.length} chars, ${Object.keys(currentChunk).length} keys`);
@@ -932,15 +932,15 @@ Translation Summary:
     private mergeContents(baseContent: any, targetContent: any, translatedContent: any): any {
         const merged = JSON.parse(JSON.stringify(baseContent));
 
-        // تبدیل translatedContent به flat structure برای پردازش آسان‌تر
+        // Convert translatedContent to flat structure for easier processing
         const flatTranslated = this.flattenNestedContent(translatedContent);
 
         for (const key in flatTranslated) {
             if (flatTranslated[key] === null) {
-                // حذف کلید از ساختار nested
+                // Delete key from nested structure
                 this.deleteNestedProperty(merged, key);
             } else {
-                // اضافه کردن یا به‌روزرسانی کلید در ساختار nested
+                // Add or update key in nested structure
                 this.setNestedProperty(merged, key, flatTranslated[key]);
             }
         }
@@ -949,7 +949,7 @@ Translation Summary:
     }
 
     /**
-     * تبدیل محتوای nested به ساختار flat اصلی
+     * Convert nested content to original flat structure
      */
     private flattenNestedContent(nestedContent: any, prefix: string = ''): Record<string, any> {
         const flattened: Record<string, any> = {};
@@ -969,7 +969,7 @@ Translation Summary:
     }
 
     /**
-     * تبدیل ساختار flat به nested object
+     * Convert flat structure to nested object
      */
     private unflattenContent(flatContent: Record<string, any>): any {
         const nested: any = {};
@@ -994,25 +994,25 @@ Translation Summary:
     }
 
     /**
-     * تبدیل پاسخ LLM به ساختار اصلی - Updated version
+     * Convert LLM response to original structure - Updated version
      */
     private convertLLMResponseToOriginalStructure(llmResponse: any, originalChunk: any): any {
         this.logger.log(`Converting LLM response to original structure...`);
         this.logger.log(`Original chunk keys: ${Object.keys(originalChunk).join(', ')}`);
         this.logger.log(`LLM response keys: ${Object.keys(llmResponse).join(', ')}`);
         
-        // ابتدا LLM response را به flat structure تبدیل می‌کنیم
+        // First, convert LLM response to flat structure
         const flattenedResponse = this.flattenNestedContent(llmResponse);
         this.logger.log(`Flattened response keys: ${Object.keys(flattenedResponse).join(', ')}`);
         
-        // حالا باید ساختار اصلی را بازسازی کنیم
+        // Now, we need to reconstruct the original structure
         const result: any = {};
         
         for (const originalKey in originalChunk) {
             if (flattenedResponse.hasOwnProperty(originalKey)) {
                 result[originalKey] = flattenedResponse[originalKey];
             } else {
-                // اگر کلید در پاسخ LLM نبود، از original استفاده کنیم
+                // If the key was not in the LLM response, use the original
                 result[originalKey] = originalChunk[originalKey];
             }
         }
@@ -1022,7 +1022,7 @@ Translation Summary:
     }
 
     /**
-     * تبدیل پاسخ LLM به ساختار اصلی - New improved version
+     * Convert LLM response to original structure - New improved version
      */
     private convertLLMResponseToOriginalStructureNew(llmResponse: any, originalChunk: any): any {
         // this.logger.log(`Converting LLM response to original structure (normalized)...`);
@@ -1033,16 +1033,16 @@ Translation Summary:
     
         for (const originalKey in originalChunk) {
             if (llmResponse.hasOwnProperty(originalKey)) {
-                // ✅ Root key مستقیم داده شده
+                // ✅ Direct root key provided
                 result[originalKey] = this.normalizeNestedKeys(llmResponse[originalKey], originalKey);
             } else {
-                // ⚠️ Root key پیدا نشد → fallback با flatten
+                // ⚠️ Root key not found → fallback with flatten
                 const flattened = this.flattenNestedContent(llmResponse);
     
                 const filteredEntries = Object.entries(flattened)
                     .filter(([key]) => key.startsWith(originalKey + "."))
                     .map(([key, value]) => {
-                        // ✅ هرجا prefix دوباره تکرار شده، یک بارش رو حذف کن
+                        // ✅ Wherever the prefix is repeated, remove one occurrence
                         const normalizedKey = key.replace(
                             new RegExp(`${originalKey}\\.${originalKey}\\.`,"g"), 
                             `${originalKey}.`
@@ -1062,8 +1062,8 @@ Translation Summary:
     }
 
     /**
-     * پاک‌سازی prefixهای تکراری مثل access-control.access-control.add-permission
-     * و بازسازی ساختار برای merge/diff نهایی
+     * Clean up duplicate prefixes like access-control.access-control.add-permission
+     * and rebuild structure for final merge/diff
      */
     private normalizeNestedKeys(obj: any, rootKey: string): any {
         if (typeof obj !== 'object' || obj === null) {
@@ -1074,14 +1074,14 @@ Translation Summary:
         for (const key in obj) {
             let cleanKey = key;
 
-            // حذف تمام prefix های تکراری rootKey در ابتدای کلید
+            // Remove all duplicate rootKey prefixes from the key
             while (cleanKey.startsWith(rootKey + '.')) {
                 cleanKey = cleanKey.substring(rootKey.length + 1);
             }
 
             const value = obj[key];
 
-            // اگر کلید دوباره برابر rootKey شد، محتوای داخلی را ادغام کن
+            // If the key becomes equal to rootKey again, merge the inner content
             if (cleanKey === rootKey) {
                 const inner = this.normalizeNestedKeys(value, rootKey);
                 if (typeof inner === 'object' && inner !== null) {
@@ -1130,19 +1130,19 @@ Translation Summary:
         this.translationCancelled = true;
         this.isTranslationActive = false;
         
-        // بستن progress bar
+        // Close progress bar
         if (this.progressBarResolve) {
             this.progressBarResolve();
             this.progressBarResolve = null;
         }
         
-        // حذف دکمه Cancel
+        // Delete Cancel button
         if (this.cancelItem) {
             this.cancelItem.dispose();
             this.cancelItem = null;
         }
         
-        // نمایش دکمه Accept All بعد از لغو
+        // Show Accept All button after cancellation
         this.showAcceptAllButtonAtEnd();
     }
 
@@ -1154,14 +1154,14 @@ Translation Summary:
         try {
             this.logger.log('Accept all changes triggered');
             if (this.tempFilePath && this.originalFilePath) {
-                // بررسی وجود فایل موقت
+                // Check if temporary file exists
                 if (fs.existsSync(this.tempFilePath)) {
-                    // استفاده از applyFinalChanges برای اعمال تغییرات
+                    // Use applyFinalChanges to apply changes
                     this.applyFinalChanges().then(() => {
                         this.logger.log('All changes applied to original file');
                         vscode.window.showInformationMessage('✅ All changes applied to original file!');
                         
-                        // حذف دکمه Accept All
+                        // Delete Accept All button
                         if (this.acceptAllItem) {
                             this.acceptAllItem.dispose();
                             this.acceptAllItem = null;

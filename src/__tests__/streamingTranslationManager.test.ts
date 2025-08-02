@@ -204,11 +204,11 @@ describe('StreamingTranslationManager', () => {
 
             const chunks = (manager as any).splitIntoChunks(largeObject, 50);
             
-            // با character-based chunking، تعداد چانک‌ها متفاوت خواهد بود
+            // With character-based chunking, the number of chunks will be different
             expect(chunks.length).toBeGreaterThan(0);
-            expect(chunks.length).toBeLessThanOrEqual(150); // حداکثر تعداد کلیدها
+            expect(chunks.length).toBeLessThanOrEqual(150); // Maximum number of keys
             
-            // هر چانک باید کلید داشته باشد
+            // Each chunk should have keys
             chunks.forEach((chunk: any) => {
                 expect(Object.keys(chunk).length).toBeGreaterThan(0);
             });
