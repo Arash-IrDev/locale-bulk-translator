@@ -806,7 +806,7 @@ Translation Summary:
             const flatTranslated = this.flattenNestedContent(normalizedChunk);
 
             // Log the three key structures for comparison
-            this.logTranslationStructures(chunkId, chunk, result.translatedContent, flatTranslated);
+            this.logTranslationStructures(chunkId, chunk, result.translatedContent, normalizedChunk);
 
             return {
                 chunkId,
@@ -1025,80 +1025,46 @@ Translation Summary:
      * Convert LLM response to original structure - New improved version
      */
     private convertLLMResponseToOriginalStructureNew(llmResponse: any, originalChunk: any): any {
-        // this.logger.log(`Converting LLM response to original structure (normalized)...`);
-        // this.logger.log(`Original chunk keys: ${Object.keys(originalChunk).join(', ')}`);
-        // this.logger.log(`LLM response keys: ${Object.keys(llmResponse).join(', ')}`);
-    
         const result: any = {};
     
         for (const originalKey in originalChunk) {
             if (llmResponse.hasOwnProperty(originalKey)) {
-                // ✅ Direct root key provided
-                result[originalKey] = this.normalizeNestedKeys(llmResponse[originalKey], originalKey);
+                // 1️⃣ flatten llmResponse[originalKey]
+                const flattened = this.flattenNestedContent(llmResponse[originalKey]);
+    
+                const cleanedEntries = Object.entries(flattened).map(([key, value]) => {
+                    // 🔹 remove first parent prefix: access-control.access-control.* → access-control.*
+                    const cleanedKey = key.replace(new RegExp(`^${originalKey}\\.`, "g"), "");
+                    return [cleanedKey, value];
+                });
+    
+                // 2️⃣ unflatten back to nested structure
+                const rebuilt = this.unflattenContent(Object.fromEntries(cleanedEntries));
+    
+                // 3️⃣ قرار دادن در ساختار اصلی
+                result[originalKey] = rebuilt;
             } else {
-                // ⚠️ Root key not found → fallback with flatten
+                // ⚠️ fallback logic (مثل حالت قبلی)
                 const flattened = this.flattenNestedContent(llmResponse);
     
                 const filteredEntries = Object.entries(flattened)
                     .filter(([key]) => key.startsWith(originalKey + "."))
                     .map(([key, value]) => {
-                        // ✅ Wherever the prefix is repeated, remove one occurrence
-                        const normalizedKey = key.replace(
-                            new RegExp(`${originalKey}\\.${originalKey}\\.`,"g"), 
+                        const cleanedKey = key.replace(
+                            new RegExp(`${originalKey}\\.${originalKey}\\.`,"g"),
                             `${originalKey}.`
-                        );
-                        return [normalizedKey, value];
+                        ).replace(new RegExp(`^${originalKey}\\.`, "g"), ""); // حذف اولین parent
+                        return [cleanedKey, value];
                     });
     
                 if (filteredEntries.length > 0) {
                     const rebuiltSubtree = this.unflattenContent(Object.fromEntries(filteredEntries));
-                    result[originalKey] = this.normalizeNestedKeys(rebuiltSubtree[originalKey] || rebuiltSubtree, originalKey);
+                    result[originalKey] = rebuiltSubtree;
                 }
             }
         }
     
-        // this.logger.log(`✅ Final normalized keys: ${Object.keys(result).join(', ')}`);
         return result;
-    }
-
-    /**
-     * Clean up duplicate prefixes like access-control.access-control.add-permission
-     * and rebuild structure for final merge/diff
-     */
-    private normalizeNestedKeys(obj: any, rootKey: string): any {
-        if (typeof obj !== 'object' || obj === null) {
-            return obj;
-        }
-
-        const normalized: any = {};
-        for (const key in obj) {
-            let cleanKey = key;
-
-            // Remove all duplicate rootKey prefixes from the key
-            while (cleanKey.startsWith(rootKey + '.')) {
-                cleanKey = cleanKey.substring(rootKey.length + 1);
-            }
-
-            const value = obj[key];
-
-            // If the key becomes equal to rootKey again, merge the inner content
-            if (cleanKey === rootKey) {
-                const inner = this.normalizeNestedKeys(value, rootKey);
-                if (typeof inner === 'object' && inner !== null) {
-                    for (const subKey in inner) {
-                        normalized[subKey] = inner[subKey];
-                    }
-                }
-                continue;
-            }
-
-            if (typeof value === 'object' && value !== null) {
-                normalized[cleanKey] = this.normalizeNestedKeys(value, rootKey);
-            } else {
-                normalized[cleanKey] = value;
-            }
-        }
-        return normalized;
     }
 
     private setNestedProperty(obj: any, path: string, value: any) {
