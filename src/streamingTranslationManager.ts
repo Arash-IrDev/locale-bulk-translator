@@ -325,8 +325,9 @@ export class StreamingTranslationManager {
             this.logger.log(`Successfully wrote chunk ${result.chunkId} to temp file`);
             
             // نمایش diff view با دکمه‌های کنترل (non-blocking)
+            // فقط تغییرات ترجمه شده را برای diff view ارسال می‌کنیم
             this.logger.log(`About to show diff view for chunk ${result.chunkId}...`);
-            this.showDiffViewWithControls(mergedContent, result.chunkId).catch(error => {
+            this.showDiffViewWithControls(convertedResponse, result.chunkId).catch(error => {
                 this.logger.error(`Error showing diff view for chunk ${result.chunkId}: ${error}`);
             });
             this.logger.log(`Diff view initiated for chunk ${result.chunkId}`);
@@ -386,18 +387,44 @@ export class StreamingTranslationManager {
         }
     }
 
-    private async showDiffViewWithControls(mergedContent: any, chunkId: string): Promise<void> {
+    private async showDiffViewWithControls(translatedChanges: any, chunkId: string): Promise<void> {
         try {
             this.logger.log(`=== Showing diff view for chunk ${chunkId} ===`);
-            this.logger.log(`Merged content keys for diff: ${Object.keys(mergedContent).join(', ')}`);
+            this.logger.log(`Translated changes keys for diff: ${Object.keys(translatedChanges).join(', ')}`);
+            
+            if (!this.originalFilePath) {
+                this.logger.error('Original file path not found for diff view');
+                return;
+            }
+            
+            // خواندن فایل اصلی
+            let originalContent: any = {};
+            if (fs.existsSync(this.originalFilePath)) {
+                originalContent = this.loadJsonFile(this.originalFilePath);
+            }
+            
+            this.logger.log(`Original content has ${Object.keys(originalContent).length} keys`);
+            this.logger.log(`Translated changes has ${Object.keys(translatedChanges).length} keys`);
+            
+            // ایجاد محتوای جدید با اعمال تغییرات ترجمه شده به فایل اصلی
+            const newContent = JSON.parse(JSON.stringify(originalContent));
+            
+            // اعمال تغییرات ترجمه شده به محتوای جدید
+            for (const key in translatedChanges) {
+                if (translatedChanges[key] === null) {
+                    this.deleteNestedProperty(newContent, key);
+                } else {
+                    this.setNestedProperty(newContent, key, translatedChanges[key]);
+                }
+            }
             
             // ایجاد فایل موقت برای diff با نام منحصر به فرد
             const timestamp = Date.now();
             const uniqueId = `${timestamp}-${chunkId}-${Math.random().toString(36).substr(2, 9)}`;
             const tempDiffPath = path.join(os.tmpdir(), `i18n-nexus-diff-${uniqueId}.json`);
-            fs.writeFileSync(tempDiffPath, JSON.stringify(mergedContent, null, 2));
+            fs.writeFileSync(tempDiffPath, JSON.stringify(newContent, null, 2));
             
-            const originalUri = vscode.Uri.file(this.originalFilePath!);
+            const originalUri = vscode.Uri.file(this.originalFilePath);
             const diffUri = vscode.Uri.file(tempDiffPath);
             
             this.logger.log(`Original URI: ${originalUri.fsPath}`);
@@ -418,7 +445,7 @@ export class StreamingTranslationManager {
                 this.logger.error(`Error opening diff view: ${diffError}`);
                 // اگر diff view باز نشد، حداقل notification نمایش دهیم
                 vscode.window.showInformationMessage(
-                    `Chunk ${chunkId} translated! Total keys: ${Object.keys(mergedContent).length}`
+                    `Chunk ${chunkId} translated! Total keys: ${Object.keys(translatedChanges).length}`
                 );
             }
             
@@ -485,6 +512,7 @@ export class StreamingTranslationManager {
 
             if (editor) {
                 // نمایش diff view با دکمه‌های Accept All و Cancel
+                // استفاده از mergedContent به جای translatedChanges (این تابع برای نمایش کلی استفاده می‌شود)
                 await this.showDiffViewWithControls(mergedContent, chunkId);
                 
                 // فقط نمایش notification (بدون تایید)
@@ -962,8 +990,9 @@ Translation Summary:
             if (flattenedResponse.hasOwnProperty(originalKey)) {
                 result[originalKey] = flattenedResponse[originalKey];
             } else {
-                // اگر کلید در پاسخ LLM نبود، از original استفاده کنیم
-                result[originalKey] = originalChunk[originalKey];
+                // اگر کلید در پاسخ LLM نبود، آن را نادیده بگیریم (نه از original استفاده کنیم)
+                // این باعث می‌شود که فقط ترجمه‌های واقعی نمایش داده شوند
+                this.logger.log(`Key ${originalKey} not found in LLM response, skipping`);
             }
         }
         

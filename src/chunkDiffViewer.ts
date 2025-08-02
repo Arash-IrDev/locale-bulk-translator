@@ -147,7 +147,7 @@ export class ChunkDiffViewer {
                     border: '1px solid',
                     borderColor: new vscode.ThemeColor('diffEditor.insertedTextBorder'),
                     overviewRulerColor: new vscode.ThemeColor('diffEditor.insertedTextBackground'),
-                    overviewRulerLane: vscode.OverviewRulerLane.Right
+                    overviewRulerLane: vscode.OverviewRulerLane?.Right || 1
                 });
 
                 editor.setDecorations(decorationType, decorations);
@@ -223,7 +223,7 @@ export class ChunkDiffViewer {
                     border: '1px solid',
                     borderColor: new vscode.ThemeColor('diffEditor.insertedTextBorder'),
                     overviewRulerColor: new vscode.ThemeColor('diffEditor.insertedTextBackground'),
-                    overviewRulerLane: vscode.OverviewRulerLane.Right
+                    overviewRulerLane: vscode.OverviewRulerLane?.Right || 1
                 });
 
                 editor.setDecorations(decorationType, decorations);

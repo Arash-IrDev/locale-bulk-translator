@@ -212,6 +212,12 @@ describe('ChunkDiffViewer', () => {
 
             const changes = { key1: 'new value' };
 
+            // Mock createTextEditorDecorationType to return a proper object
+            const mockDecorationType = {
+                dispose: jest.fn()
+            };
+            (vscode.window.createTextEditorDecorationType as jest.Mock).mockReturnValue(mockDecorationType);
+
             await viewer.showInlineDiff(mockEditor, changes);
 
             expect(mockEditor.setDecorations).toHaveBeenCalled();
