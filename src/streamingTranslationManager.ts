@@ -43,6 +43,7 @@ export class StreamingTranslationManager {
     private progressBarResolve: (() => void) | null = null;
     private diffViewer: ChunkDiffViewer;
     private allChangesFlat: Record<string, string | null> = {};
+    private diffTempFiles: string[] = [];
 
     constructor(logger: Logger, channel: vscode.OutputChannel) {
         this.llmService = new LLMService(logger, channel);
@@ -303,15 +304,21 @@ export class StreamingTranslationManager {
 
         try {
             // بررسی اعتبار محتوای ترجمه شده
-            if (!result.translatedContent || 
-                typeof result.translatedContent !== 'object' || 
+            if (!result.translatedContent ||
+                typeof result.translatedContent !== 'object' ||
                 Object.keys(result.translatedContent).length === 0) {
                 this.logger.warn(`Chunk ${result.chunkId} has invalid or empty translated content`);
                 return false;
             }
 
-            // تبدیل پاسخ LLM به ساختار flat
-            const flatTranslated = this.flattenNestedContent(result.translatedContent);
+            // بازسازی ساختار اصلی و حذف prefix های تکراری
+            const normalizedChunk = this.convertLLMResponseToOriginalStructureNew(
+                result.translatedContent,
+                result.originalContent
+            );
+
+            // تبدیل نتیجه نهایی به ساختار flat
+            const flatTranslated = this.flattenNestedContent(normalizedChunk);
 
             // ادغام تغییرات جدید با وضعیت کلی
             this.allChangesFlat = {
@@ -319,21 +326,21 @@ export class StreamingTranslationManager {
                 ...flatTranslated
             };
 
-            // بازسازی محتوای کامل
+            // بازسازی محتوای کامل از وضعیت flat
             const mergedContent = this.unflattenContent(this.allChangesFlat);
 
-            // نوشتن به فایل موقت
+            // نوشتن به فایل موقت کامل
             fs.writeFileSync(this.tempFilePath, JSON.stringify(mergedContent, null, 2));
 
             this.logger.log(`Successfully wrote chunk ${result.chunkId} to temp file`);
 
-            // نمایش diff view با محتوای تجمیع شده
+            // نمایش diff view تجمعی
             this.logger.log(`About to show diff view for chunk ${result.chunkId}...`);
             this.showDiffViewWithControls(mergedContent, result.chunkId).catch(error => {
                 this.logger.error(`Error showing diff view for chunk ${result.chunkId}: ${error}`);
             });
             this.logger.log(`Diff view initiated for chunk ${result.chunkId}`);
-            
+
             return true;
         } catch (error) {
             this.logger.error(`Error applying chunk to file: ${error}`);
@@ -398,18 +405,16 @@ export class StreamingTranslationManager {
                 return;
             }
 
-            // ایجاد فایل موقت برای diff با نام منحصر به فرد
-            const timestamp = Date.now();
-            const uniqueId = `${timestamp}-${chunkId}-${Math.random().toString(36).substr(2, 9)}`;
-            const tempDiffPath = path.join(os.tmpdir(), `i18n-nexus-diff-${uniqueId}.json`);
+            // ایجاد فایل موقت برای diff که شامل تمام تغییرات تا این لحظه است
+            const tempDiffPath = path.join(os.tmpdir(), `i18n-nexus-diff-${chunkId}.json`);
             fs.writeFileSync(tempDiffPath, JSON.stringify(mergedContent, null, 2));
+            this.diffTempFiles.push(tempDiffPath);
 
             const originalUri = vscode.Uri.file(this.originalFilePath);
             const diffUri = vscode.Uri.file(tempDiffPath);
 
             this.logger.log(`Original URI: ${originalUri.fsPath}`);
             this.logger.log(`Diff URI: ${diffUri.fsPath}`);
-            this.logger.log(`Unique ID: ${uniqueId}`);
 
             // نمایش دکمه‌های کنترل در status bar (قبل از باز کردن diff view)
             this.showControlButtonsInStatusBar();
@@ -419,7 +424,7 @@ export class StreamingTranslationManager {
 
             // باز کردن diff view جدید
             try {
-                await vscode.commands.executeCommand('vscode.diff', originalUri, diffUri, `Live Translation Progress - ${chunkId} (${uniqueId})`);
+                await vscode.commands.executeCommand('vscode.diff', originalUri, diffUri, `Live Translation Progress - ${chunkId}`);
                 this.logger.log('Diff view opened successfully');
             } catch (diffError) {
                 this.logger.error(`Error opening diff view: ${diffError}`);
@@ -707,6 +712,16 @@ Translation Summary:
         }
 
         // پاک کردن فایل‌های diff
+        for (const diffPath of this.diffTempFiles) {
+            try {
+                if (fs.existsSync(diffPath)) {
+                    fs.unlinkSync(diffPath);
+                }
+            } catch (error) {
+                this.logger.error(`Error cleaning diff file ${diffPath}: ${error}`);
+            }
+        }
+        this.diffTempFiles = [];
         this.diffViewer.cleanup();
 
         this.tempFilePath = null;
@@ -884,49 +899,45 @@ Translation Summary:
     /**
      * تبدیل محتوای nested به ساختار flat اصلی
      */
-    private flattenNestedContent(nestedContent: any, prefix: string = ''): any {
-        const flattened: any = {};
-        
+    private flattenNestedContent(nestedContent: any, prefix: string = ''): Record<string, any> {
+        const flattened: Record<string, any> = {};
+
         for (const key in nestedContent) {
             const value = nestedContent[key];
             const fullKey = prefix ? `${prefix}.${key}` : key;
-            
-            if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-                // اگر مقدار یک object است، آن را recursively flatten کنیم
-                const subFlattened = this.flattenNestedContent(value, fullKey);
-                Object.assign(flattened, subFlattened);
+
+            if (value && typeof value === 'object' && !Array.isArray(value)) {
+                Object.assign(flattened, this.flattenNestedContent(value, fullKey));
             } else {
-                // اگر مقدار primitive است، کلید کامل را استفاده کنیم
                 flattened[fullKey] = value;
             }
         }
-        
+
         return flattened;
     }
 
     /**
      * تبدیل ساختار flat به nested object
      */
-    private unflattenContent(flatContent: any): any {
+    private unflattenContent(flatContent: Record<string, any>): any {
         const nested: any = {};
-        
+
         for (const key in flatContent) {
             const value = flatContent[key];
             const keyParts = key.split('.');
-            
+
             let current = nested;
             for (let i = 0; i < keyParts.length - 1; i++) {
                 const part = keyParts[i];
-                if (!(part in current)) {
+                if (!current[part] || typeof current[part] !== 'object') {
                     current[part] = {};
                 }
                 current = current[part];
             }
-            
-            const lastPart = keyParts[keyParts.length - 1];
-            current[lastPart] = value;
+
+            current[keyParts[keyParts.length - 1]] = value;
         }
-        
+
         return nested;
     }
 
@@ -1003,19 +1014,36 @@ Translation Summary:
      * و بازسازی ساختار برای merge/diff نهایی
      */
     private normalizeNestedKeys(obj: any, rootKey: string): any {
-        if (typeof obj !== 'object' || obj === null) {return obj;}
+        if (typeof obj !== 'object' || obj === null) {
+            return obj;
+        }
 
         const normalized: any = {};
         for (const key in obj) {
-            // اگر دوباره rootKey توی اسم کلید تکرار شده، حذفش کن
-            const cleanKey = key.startsWith(rootKey + ".")
-                ? key.replace(new RegExp(`^${rootKey}\\.`,""), "")
-                : key;
+            let cleanKey = key;
 
-            if (typeof obj[key] === 'object' && obj[key] !== null) {
-                normalized[cleanKey] = this.normalizeNestedKeys(obj[key], rootKey);
+            // حذف تمام prefix های تکراری rootKey در ابتدای کلید
+            while (cleanKey.startsWith(rootKey + '.')) {
+                cleanKey = cleanKey.substring(rootKey.length + 1);
+            }
+
+            const value = obj[key];
+
+            // اگر کلید دوباره برابر rootKey شد، محتوای داخلی را ادغام کن
+            if (cleanKey === rootKey) {
+                const inner = this.normalizeNestedKeys(value, rootKey);
+                if (typeof inner === 'object' && inner !== null) {
+                    for (const subKey in inner) {
+                        normalized[subKey] = inner[subKey];
+                    }
+                }
+                continue;
+            }
+
+            if (typeof value === 'object' && value !== null) {
+                normalized[cleanKey] = this.normalizeNestedKeys(value, rootKey);
             } else {
-                normalized[cleanKey] = obj[key];
+                normalized[cleanKey] = value;
             }
         }
         return normalized;
