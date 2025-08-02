@@ -51,9 +51,9 @@ export class StreamingTranslationManager {
         this.outputChannel = channel;
         this.diffViewer = ChunkDiffViewer.getInstance();
         
-        // دریافت تنظیمات
+        // Get configuration
         const config = vscode.workspace.getConfiguration('i18nNexus');
-        this.chunkSize = config.get<number>('chunkSize', 3000); // حداکثر 3000 کاراکتر در هر chunk برای gpt-4o-mini
+        this.chunkSize = config.get<number>('chunkSize', 3000); // Maximum 3000 characters per chunk for gpt-4o-mini
         this.autoSaveInterval = config.get<number>('autoSaveInterval', 100);
     }
 
@@ -81,24 +81,18 @@ export class StreamingTranslationManager {
         this.logger.log('');
         
         // 3. Final Extracted Structure (for diff file) - only if provided
-        if (finalStructure !== null) {
-            this.logger.log(`📋 FINAL EXTRACTED STRUCTURE (${Object.keys(finalStructure).length} keys):`);
-            this.logger.log(sectionSeparator);
-            this.logger.log(JSON.stringify(finalStructure, null, 2));
-            this.logger.log('');
-        }
+        this.logger.log(`📋 FINAL EXTRACTED STRUCTURE (${Object.keys(finalStructure).length} keys):`);
+        this.logger.log(sectionSeparator);
+        this.logger.log(JSON.stringify(finalStructure, null, 2));
+        this.logger.log('');
         
         // Summary comparison
         this.logger.log(`📊 STRUCTURE COMPARISON SUMMARY:`);
         this.logger.log(sectionSeparator);
         this.logger.log(`Input keys: ${Object.keys(inputToLLM).join(', ')}`);
         this.logger.log(`Response keys: ${Object.keys(llmResponse).join(', ')}`);
-        if (finalStructure !== null) {
-            this.logger.log(`Final keys: ${Object.keys(finalStructure).join(', ')}`);
-        } else {
-            this.logger.log(`Final structure: Will be logged in applyChunkToFile`);
-        }
-        
+        this.logger.log(`Final keys: ${Object.keys(finalStructure).join(', ')}`);
+
         this.logger.log(separator);
         this.logger.log('');
     }
@@ -117,13 +111,13 @@ export class StreamingTranslationManager {
             this.originalFilePath = filePath;
             this.logger.log(`🚀 Starting streaming translation for file: ${filePath}`);
 
-            // بررسی معتبر بودن فایل
+            // Check if file is valid
             if (!this.isValidTranslationFile(filePath)) {
                 vscode.window.showErrorMessage('This file cannot be translated. Please select a valid translation JSON file.');
                 return;
             }
 
-            // دریافت تنظیمات
+            // Get configuration
             const config = vscode.workspace.getConfiguration('i18nNexus');
             const basePath = config.get<string>('basePath');
             const baseLanguage = config.get<string>('baseLanguage');
@@ -146,7 +140,7 @@ export class StreamingTranslationManager {
                 throw new Error('API key not configured for this provider.');
             }
 
-            // تشخیص زبان فایل
+            // Detect file language
             const fileName = path.basename(filePath);
             const lang = path.parse(fileName).name;
 
@@ -155,7 +149,7 @@ export class StreamingTranslationManager {
                 return;
             }
 
-            // خواندن فایل‌ها
+            // Read files
             const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '';
             const fullBasePath = path.join(workspaceRoot, basePath);
             const baseFilePath = path.join(fullBasePath, `${baseLanguage}.json`);
@@ -168,7 +162,7 @@ export class StreamingTranslationManager {
             const targetContent = fs.existsSync(filePath) ? this.loadJsonFile(filePath) : {};
             const originalBaseContent = this.getOriginalBaseContent(baseFilePath);
 
-            // آماده‌سازی محتوای ترجمه
+            // Prepare translation content
             const toTranslate = this.prepareTranslationContent(baseContent, targetContent, originalBaseContent);
 
             if (Object.keys(toTranslate).length === 0) {
@@ -176,15 +170,15 @@ export class StreamingTranslationManager {
                 return;
             }
 
-            // تقسیم به چانک‌ها
+            // Split into chunks
             const chunks = this.splitIntoChunks(toTranslate, this.chunkSize);
             this.logger.log(`📦 Split content into ${chunks.length} chunks from ${Object.keys(toTranslate).length} total keys`);
 
-            // ایجاد فایل موقت برای ترجمه
+            // Create temporary file for translation
             this.tempFilePath = this.createTempFile(filePath, targetContent);
             this.allChangesFlat = this.flattenNestedContent(targetContent);
 
-            // شروع ترجمه استریمینگ
+            // Start streaming translation
             const results: StreamingTranslationResult[] = [];
             let totalTokens = { inputTokens: 0, outputTokens: 0 };
             let acceptedChunks = 0;
@@ -192,7 +186,7 @@ export class StreamingTranslationManager {
 
             this.logger.log(`🚀 Starting translation loop for ${chunks.length} chunks`);
 
-            // نمایش progress bar به صورت async
+            // Show progress bar asynchronously
             this.showProgressBar(chunks.length).catch(error => {
                 this.logger.error(`Error in progress bar: ${error}`);
             });
@@ -209,15 +203,15 @@ export class StreamingTranslationManager {
                 this.logger.log(`🔄 Processing chunk ${chunkId} (${i + 1}/${chunks.length})`);
 
                 try {
-                    // به‌روزرسانی progress
+                    // Update progress
                     this.updateProgress(i + 1, chunks.length, chunkId, totalTokens, acceptedChunks, rejectedChunks);
 
-                    // ترجمه چانک
+                    // Translate chunk
                     // this.logger.log(`Translating chunk ${chunkId}...`);
                     const result = await this.translateChunk(chunk, lang, chunkId, i + 1, chunks.length);
                     // this.logger.log(`Chunk ${chunkId} translated successfully`);
                     
-                    // اعمال مستقیم در فایل موقت
+                    // Apply directly to temporary file
                     // this.logger.log(`Applying chunk ${chunkId} to temp file...`);
                     const applied = await this.applyChunkToFile(result);
                     
@@ -231,13 +225,13 @@ export class StreamingTranslationManager {
                         this.logger.log(`❌ Chunk ${chunkId} rejected by user`);
                     }
 
-                    // ذخیره نتیجه
+                    // Save result
                     results.push({
                         ...result,
                         applied
                     });
 
-                    // کمی تاخیر برای نمایش بهتر
+                    // Small delay for better display
                     // this.logger.log(`Waiting ${this.autoSaveInterval}ms before next chunk...`);
                     await this.delay(this.autoSaveInterval);
 
@@ -255,12 +249,12 @@ export class StreamingTranslationManager {
                 if (acceptedChunks > 0) {
                     this.logger.log('✅ Translation completed successfully, showing final summary...');
                     
-                    // نمایش خلاصه نهایی
+                    // Show final summary
                     await this.showFinalSummary(results, totalTokens, acceptedChunks, rejectedChunks);
                     
                     this.logger.log('🎯 Translation completed - use Accept All or Reject All buttons in status bar');
                     
-                    // نمایش پیام نهایی بدون popup
+                    // Show final message without popup
                     vscode.window.showInformationMessage(
                         `Translation completed! ${acceptedChunks} chunks processed successfully, ${rejectedChunks} failed. Use Accept All or Reject All buttons in status bar.`
                     );
@@ -272,14 +266,14 @@ export class StreamingTranslationManager {
                     this.cleanup();
                 }
                 
-                // cleanup فقط وقتی کاربر تصمیم نهایی گرفت (با دکمه‌های Accept All/Reject All)
+                // cleanup only when user makes final decision (with Accept All/Reject All buttons)
             } else if (this.translationCancelled) {
                 this.logger.log('❌ Translation was cancelled by user');
                 vscode.window.showInformationMessage('Translation was cancelled by user.');
-                this.cleanup(); // cleanup در صورت cancel
+                this.cleanup(); // cleanup in case of cancel
             } else {
                 this.logger.log('❌ No results to process');
-                this.cleanup(); // cleanup در صورت عدم وجود نتیجه
+                this.cleanup(); // cleanup in case of no results
             }
 
         } catch (error) {
@@ -289,33 +283,33 @@ export class StreamingTranslationManager {
             // this.logger.log('Setting isTranslationActive to false');
             this.isTranslationActive = false;
             this.hideProgressBar();
-            // hideStatusBar() را حذف کردیم تا دکمه‌های Accept All/Reject All باقی بمانند
-            // cleanup() را بعد از askForFinalApply فراخوانی نمی‌کنیم
+            // hideStatusBar() was removed to keep Accept All/Reject All buttons
+            // cleanup() is not called after askForFinalApply
         }
     }
 
     private isValidTranslationFile(filePath: string): boolean {
-        // بررسی اینکه فایل در مسیر output channel نیست
+        // Check that file is not in output channel path
         if (filePath.includes('extension-output') || filePath.includes('i18n Nexus')) {
             return false;
         }
 
-        // بررسی اینکه فایل JSON است
+        // Check that file is JSON
         if (!filePath.endsWith('.json')) {
             return false;
         }
 
-        // بررسی اینکه فایل در workspace است
+        // Check that file is in workspace
         const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
         if (workspaceRoot && !filePath.startsWith(workspaceRoot)) {
             return false;
         }
 
-        // بررسی اینکه فایل وجود دارد و قابل خواندن است
+        // Check that file exists and is readable
         try {
             if (fs.existsSync(filePath)) {
                 const content = fs.readFileSync(filePath, 'utf8');
-                JSON.parse(content); // بررسی اینکه JSON معتبر است
+                JSON.parse(content); // Check that JSON is valid
                 return true;
             }
         } catch (error) {
@@ -335,7 +329,7 @@ export class StreamingTranslationManager {
         const tempFileName = `streaming_${Date.now()}_${path.basename(originalFilePath)}`;
         const tempFilePath = path.join(tempDir, tempFileName);
         
-        // نوشتن محتوای اولیه
+        // Write initial content
         fs.writeFileSync(tempFilePath, JSON.stringify(initialContent, null, 2));
         
         this.logger.log(`Created temp file: ${tempFilePath}`);
@@ -349,7 +343,7 @@ export class StreamingTranslationManager {
         }
 
         try {
-            // بررسی اعتبار محتوای ترجمه شده
+            // Check validity of translated content
             if (!result.translatedContent ||
                 typeof result.translatedContent !== 'object' ||
                 Object.keys(result.translatedContent).length === 0) {
@@ -357,30 +351,30 @@ export class StreamingTranslationManager {
                 return false;
             }
 
-            // بازسازی ساختار اصلی و حذف prefix های تکراری
+            // Reconstruct original structure and remove duplicate prefixes
             const normalizedChunk = this.convertLLMResponseToOriginalStructureNew(
                 result.translatedContent,
                 result.originalContent
             );
 
-            // تبدیل نتیجه نهایی به ساختار flat
+            // Convert final result to flat structure
             const flatTranslated = this.flattenNestedContent(normalizedChunk);
 
-            // ادغام تغییرات جدید با وضعیت کلی
+            // Merge new changes with overall state
             this.allChangesFlat = {
                 ...this.allChangesFlat,
                 ...flatTranslated
             };
 
-            // بازسازی محتوای کامل از وضعیت flat
+            // Reconstruct complete content from flat state
             const mergedContent = this.unflattenContent(this.allChangesFlat);
 
-            // نوشتن به فایل موقت کامل
+            // Write to complete temporary file
             fs.writeFileSync(this.tempFilePath, JSON.stringify(mergedContent, null, 2));
 
             // this.logger.log(`Successfully wrote chunk ${result.chunkId} to temp file`);
 
-            // نمایش diff view تجمعی
+            // Show cumulative diff view
             // this.logger.log(`About to show diff view for chunk ${result.chunkId}...`);
             this.showDiffViewWithControls(mergedContent, result.chunkId).catch(error => {
                 this.logger.error(`Error showing diff view for chunk ${result.chunkId}: ${error}`);
@@ -405,7 +399,7 @@ export class StreamingTranslationManager {
 
             // this.logger.log(`Original file path: ${this.originalFilePath}`);
 
-            // خواندن فایل اصلی
+            // Read original file
             let originalContent: any = {};
             if (fs.existsSync(this.originalFilePath)) {
                 originalContent = this.loadJsonFile(this.originalFilePath);
@@ -416,7 +410,7 @@ export class StreamingTranslationManager {
 
             // this.logger.log(`Merged content has ${Object.keys(mergedContent).length} keys`);
 
-            // باز کردن فایل اصلی در editor اگر باز نیست
+            // Open original file in editor if not already open
             let editor = vscode.window.activeTextEditor;
             if (!editor || editor.document.uri.fsPath !== this.originalFilePath) {
                 // this.logger.log('Opening original file in editor...');
@@ -428,7 +422,7 @@ export class StreamingTranslationManager {
             if (editor) {
                 // this.logger.log('Active editor found, showing realtime diff...');
                 
-                // نمایش diff به صورت visual
+                // Show diff visually
                 await this.showLiveDiffAndUpdate(mergedContent, 'current');
                 
                 // this.logger.log('Visual diff displayed');
@@ -451,7 +445,7 @@ export class StreamingTranslationManager {
                 return;
             }
 
-            // ایجاد فایل موقت برای diff که شامل تمام تغییرات تا این لحظه است
+            // Create temporary file for diff that includes all changes up to this point
             const tempDiffPath = path.join(os.tmpdir(), `i18n-nexus-diff-${chunkId}.json`);
             fs.writeFileSync(tempDiffPath, JSON.stringify(mergedContent, null, 2));
             this.diffTempFiles.push(tempDiffPath);
@@ -462,19 +456,19 @@ export class StreamingTranslationManager {
             this.logger.log(`Original URI: ${originalUri.fsPath}`);
             this.logger.log(`Diff URI: ${diffUri.fsPath}`);
 
-            // نمایش دکمه‌های کنترل در status bar (قبل از باز کردن diff view)
+            // Show control buttons in status bar (before opening diff view)
             this.showControlButtonsInStatusBar();
 
-            // کمی تاخیر برای اطمینان از باز شدن diff view جدید
+            // Small delay to ensure new diff view opens
             await this.delay(50);
 
-            // باز کردن diff view جدید
+            // Open new diff view
             try {
                 await vscode.commands.executeCommand('vscode.diff', originalUri, diffUri, `Live Translation Progress - ${chunkId}`);
                 this.logger.log('Diff view opened successfully');
             } catch (diffError) {
                 this.logger.error(`Error opening diff view: ${diffError}`);
-                // اگر diff view باز نشد، حداقل notification نمایش دهیم
+                // If diff view doesn't open, at least show notification
                 vscode.window.showInformationMessage(
                     `Chunk ${chunkId} translated! Total keys: ${Object.keys(mergedContent).length}`
                 );
@@ -500,10 +494,10 @@ export class StreamingTranslationManager {
         
         this.logger.log(`Looking for key: ${key}, lastKey: ${lastKey}`);
         
-        // جستجو برای کلید کامل
+        // Search for complete key
         let keyIndex = text.indexOf(`"${key}"`);
         if (keyIndex === -1) {
-            // جستجو برای آخرین بخش کلید
+            // Search for last part of key
             keyIndex = text.indexOf(`"${lastKey}"`);
             this.logger.log(`Full key not found, searching for lastKey: ${lastKey}, found at: ${keyIndex}`);
         } else {
@@ -532,7 +526,7 @@ export class StreamingTranslationManager {
                 return;
             }
 
-            // باز کردن فایل اصلی در editor
+            // Open original file in editor
             let editor = vscode.window.activeTextEditor;
             if (!editor || editor.document.uri.fsPath !== this.originalFilePath) {
                 this.logger.log('Opening original file in editor...');
@@ -542,11 +536,11 @@ export class StreamingTranslationManager {
             }
 
             if (editor) {
-                // نمایش diff view با دکمه‌های Accept All و Cancel
-                // استفاده از mergedContent به جای translatedChanges (این تابع برای نمایش کلی استفاده می‌شود)
+                // Show diff view with Accept All and Cancel buttons
+                // Use mergedContent instead of translatedChanges (this function is used for overall display)
                 await this.showDiffViewWithControls(mergedContent, chunkId);
                 
-                // فقط نمایش notification (بدون تایید)
+                // Only show notification (without confirmation)
                 vscode.window.showInformationMessage(
                     `Chunk ${chunkId} translated! Total keys: ${Object.keys(mergedContent).length}`
                 );
@@ -573,18 +567,18 @@ Translation Summary:
 
         this.outputChannel.appendLine(summary);
         
-        // بستن progress bar
+        // Close progress bar
         if (this.progressBarResolve) {
             this.progressBarResolve();
             this.progressBarResolve = null;
         }
         
-        // نمایش خلاصه به کاربر (بدون await)
+        // Show summary to user (without await)
         vscode.window.showInformationMessage(
             `🎉 Translation completed! Total keys processed: ${results.length}`
         );
         
-        // نمایش دکمه Accept All در پایان عملیات
+        // Show Accept All button at end of operation
         this.showAcceptAllButtonAtEnd();
     }
 
@@ -608,7 +602,7 @@ Translation Summary:
         }
 
         try {
-            // کپی فایل موقت به فایل اصلی
+            // Copy temporary file to original file
             const tempContent = fs.readFileSync(this.tempFilePath, 'utf8');
             fs.writeFileSync(this.originalFilePath, tempContent);
             
