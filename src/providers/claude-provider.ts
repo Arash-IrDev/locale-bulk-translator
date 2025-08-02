@@ -1,7 +1,7 @@
 import axios from 'axios';
 import * as vscode from 'vscode';
 import { ILLMProvider, TranslationResult, ValidationResult, TokenUsage } from '../llm-provider.interface';
-import { Logger } from '../logger';
+import { Logger, LogCategory } from '../logger';
 
 export class ClaudeProvider implements ILLMProvider {
     private apiKey: string = '';
@@ -14,56 +14,56 @@ export class ClaudeProvider implements ILLMProvider {
         this.apiUrl = config.get('llmApiUrl') || 'https://api.anthropic.com/v1/complete';
         this.model = config.get('llmModel') || this.model;
         this.logger = logger;
-        this.logger.log('ClaudeProvider initialized');
+        this.logger.info('ClaudeProvider initialized', LogCategory.PROVIDER);
     }
 
     async translate(content: any, targetLang: string): Promise<TranslationResult> {
-        this.logger.log(`Claude: Starting translation to ${targetLang}`);
+        this.logger.logTranslation(`Starting translation to ${targetLang}`);
         const prompt = this.generatePrompt(content, targetLang);
         
         try {
             const result = await this.callAPI(prompt);
             const parsedResponse = this.parseResponse(result.content);
-            this.logger.log(`Claude: Translation to ${targetLang} completed`);
+            this.logger.logTranslation(`Translation to ${targetLang} completed`);
             return {
                 translatedContent: parsedResponse,
                 tokensUsed: result.tokensUsed
             };
         } catch (error) {
-            this.logger.error('Claude: Translation failed', error);
+            this.logger.error('Translation failed', error, LogCategory.PROVIDER);
             throw error;
         }
     }
 
     async compareAndUpdate(oldContent: any, newContent: any, targetLang: string): Promise<any> {
-        this.logger.log(`Claude: Starting compare and update for ${targetLang}`);
+        this.logger.logTranslation(`Starting compare and update for ${targetLang}`);
         const prompt = this.generateCompareAndUpdatePrompt(oldContent, newContent, targetLang);
         
         try {
             const response = await this.callAPI(prompt);
             const parsedResponse = this.parseResponse(response.content);
-            this.logger.log(`Claude: Compare and update for ${targetLang} completed`);
+            this.logger.logTranslation(`Compare and update for ${targetLang} completed`);
             return parsedResponse;
         } catch (error) {
-            this.logger.error('Claude: Compare and update failed', error);
+            this.logger.error('Compare and update failed', error, LogCategory.PROVIDER);
             throw error;
         }
     }
 
     async validateTranslation(originalContent: any, translatedContent: any, targetLang: string): Promise<ValidationResult> {
-        this.logger.log(`Claude: Starting translation validation for ${targetLang}`);
+        this.logger.logTranslation(`Starting translation validation for ${targetLang}`);
         const prompt = this.generateValidationPrompt(originalContent, translatedContent, targetLang);
         
         try {
             const result = await this.callAPI(prompt);
             const isValid = this.parseValidationResponse(result.content);
-            this.logger.log(`Claude: Translation validation for ${targetLang} completed`);
+            this.logger.logTranslation(`Translation validation for ${targetLang} completed`);
             return {
                 isValid,
                 tokensUsed: result.tokensUsed
             };
         } catch (error) {
-            this.logger.error('Claude: Translation validation failed', error);
+            this.logger.error('Translation validation failed', error, LogCategory.PROVIDER);
             throw error;
         }
     }
@@ -85,7 +85,7 @@ export class ClaudeProvider implements ILLMProvider {
     }
 
     private async callAPI(prompt: string): Promise<{ content: string; tokensUsed: TokenUsage }> {
-        this.logger.log('Claude: Calling API');
+        this.logger.logApi('Calling API');
         const headers = {
             'Content-Type': 'application/json',
             'X-API-Key': this.apiKey
@@ -105,32 +105,32 @@ export class ClaudeProvider implements ILLMProvider {
                 inputTokens: prompt.split(' ').length, // Rough estimate
                 outputTokens: content.split(' ').length // Rough estimate
             };
-            this.logger.log('Claude: API call successful');
+            this.logger.logApi('API call successful');
             return { content, tokensUsed };
         } catch (error) {
-            this.logger.error('Claude: API call failed', error);
+            this.logger.error('API call failed', error, LogCategory.API_LOGS);
             throw error;
         }
     }
 
     private parseResponse(response: string): any {
-        this.logger.log('Claude: Parsing response');
+        this.logger.logApi('Parsing response');
         try {
             const jsonMatch = response.match(/\{[\s\S]*\}/);
             if (jsonMatch) {
-                this.logger.log('Claude: JSON part extracted successfully');
+                this.logger.logApi('JSON part extracted successfully');
                 return JSON.parse(jsonMatch[0]);
             } else {
                 throw new Error("No valid JSON found in the response");
             }
         } catch (error) {
-            this.logger.error('Claude: Failed to parse response as JSON');
+            this.logger.error('Failed to parse response as JSON', error, LogCategory.API_LOGS);
             throw new Error("Failed to parse Claude response as JSON");
         }
     }
 
     private parseValidationResponse(response: string): boolean {
-        this.logger.log('Claude: Parsing validation response');
+        this.logger.logApi('Parsing validation response');
         return response.toLowerCase().includes('true');
     }
 }

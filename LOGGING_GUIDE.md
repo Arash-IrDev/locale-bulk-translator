@@ -20,6 +20,7 @@
 - **TRANSLATION**: لاگ‌های ترجمه (پیش‌فرض فعال)
 - **STRUCTURES**: ساختارهای ترجمه (پیش‌فرض فعال)
 - **PROVIDER**: لاگ‌های provider ها (پیش‌فرض غیرفعال)
+- **API_LOGS**: لاگ‌های API request/response (پیش‌فرض غیرفعال)
 - **UI**: لاگ‌های رابط کاربری
 
 ### 🎮 دستورات کنترل لاگینگ
@@ -40,7 +41,12 @@ Command Palette → i18n Nexus: Toggle Provider Logs
 Command Palette → i18n Nexus: Toggle Structure Logs
 ```
 
-#### 4. فعال/غیرفعال کردن Debug (Legacy)
+#### 4. فعال/غیرفعال کردن لاگ‌های API
+```
+Command Palette → i18n Nexus: Toggle API Logs
+```
+
+#### 5. فعال/غیرفعال کردن Debug (Legacy)
 ```
 Command Palette → i18n Nexus: Toggle Debug Output
 ```
@@ -58,26 +64,26 @@ Command Palette → i18n Nexus: Toggle Debug Output
 
 #### در حین API Call:
 ```
-🔍 DEBUG[PROVIDER] Calling API
-🔍 DEBUG[PROVIDER] API URL: http://localhost:11434/v1/chat/completions
-🔍 DEBUG[PROVIDER] Model: gemma3:4b
-🔍 DEBUG[PROVIDER] Request Body: { ... }
+🔍 DEBUG[API_LOGS] Calling API
+🔍 DEBUG[API_LOGS] API URL: http://localhost:11434/v1/chat/completions
+🔍 DEBUG[API_LOGS] Model: gemma3:4b
+🔍 DEBUG[API_LOGS] Request Body: { ... }
 ```
 
 #### پس از دریافت پاسخ:
 ```
-🔍 DEBUG[PROVIDER] API call successful
-🔍 DEBUG[PROVIDER] Response Status: 200
-🔍 DEBUG[PROVIDER] Raw response length: 2048 characters
-🔍 DEBUG[PROVIDER] Raw response preview: {"admin":{"user-admin-page":{"title":"صفحه مدیریت کاربران"...
+🔍 DEBUG[API_LOGS] API call successful
+🔍 DEBUG[API_LOGS] Response Status: 200
+🔍 DEBUG[API_LOGS] Raw response length: 2048 characters
+🔍 DEBUG[API_LOGS] Raw response preview: {"admin":{"user-admin-page":{"title":"صفحه مدیریت کاربران"...
 ```
 
 #### در حین Parsing:
 ```
-🔍 DEBUG[PROVIDER] Parsing response
-🔍 DEBUG[PROVIDER] Response starts with: {"admin":{"user-admin-page":{"title":"صفحه مدیریت کاربران"...
-🔍 DEBUG[PROVIDER] Found JSON match, length: 2048
-🔍 DEBUG[PROVIDER] JSON preview: {"admin":{"user-admin-page":{"title":"صفحه مدیریت کاربران"...
+🔍 DEBUG[API_LOGS] Parsing response
+🔍 DEBUG[API_LOGS] Response starts with: {"admin":{"user-admin-page":{"title":"صفحه مدیریت کاربران"...
+🔍 DEBUG[API_LOGS] Found JSON match, length: 2048
+🔍 DEBUG[API_LOGS] JSON preview: {"admin":{"user-admin-page":{"title":"صفحه مدیریت کاربران"...
 ```
 
 #### پس از ترجمه:
@@ -187,9 +193,9 @@ Final keys: admin.user-admin-page, admin.user-list-page, admin.users-list
 ℹ️  INFO[TRANSLATION] Starting translation to fa
 🔍 DEBUG[PROVIDER] Input content structure: 5 keys
 🔍 DEBUG[PROVIDER] Input content keys: welcome, login, logout, save, cancel
-🔍 DEBUG[PROVIDER] Raw response length: 156 characters
-🔍 DEBUG[PROVIDER] Raw response preview: {"welcome":"خوش آمدید","login":"ورود","logout":"خروج"...
-🔍 DEBUG[PROVIDER] Found JSON match, length: 156
+🔍 DEBUG[API_LOGS] Raw response length: 156 characters
+🔍 DEBUG[API_LOGS] Raw response preview: {"welcome":"خوش آمدید","login":"ورود","logout":"خروج"...
+🔍 DEBUG[API_LOGS] Found JSON match, length: 156
 🔍 DEBUG[PROVIDER] Parsed response structure: 5 keys
 ℹ️  INFO[TRANSLATION] Translation to fa completed successfully
 ```
@@ -198,13 +204,13 @@ Final keys: admin.user-admin-page, admin.user-list-page, admin.users-list
 ```
 ℹ️  INFO[TRANSLATION] Starting translation to fa
 🔍 DEBUG[PROVIDER] Input content structure: 5 keys
-🔍 DEBUG[PROVIDER] Raw response length: 2048 characters
-🔍 DEBUG[PROVIDER] Raw response preview: I've analyzed the JSON content and here's what I found...
-🔍 DEBUG[PROVIDER] No JSON match found, trying to parse entire response
-❌ ERROR[PROVIDER] Failed to parse response as JSON
-🔍 DEBUG[PROVIDER] Response type: string
-🔍 DEBUG[PROVIDER] Response length: 2048
-🔍 DEBUG[PROVIDER] Raw response: I've analyzed the JSON content and here's what I found...
+🔍 DEBUG[API_LOGS] Raw response length: 2048 characters
+🔍 DEBUG[API_LOGS] Raw response preview: I've analyzed the JSON content and here's what I found...
+🔍 DEBUG[API_LOGS] No JSON match found, trying to parse entire response
+❌ ERROR[API_LOGS] Failed to parse response as JSON
+🔍 DEBUG[API_LOGS] Response type: string
+🔍 DEBUG[API_LOGS] Response length: 2048
+🔍 DEBUG[API_LOGS] Raw response: I've analyzed the JSON content and here's what I found...
 ```
 
 ## نکات مهم
@@ -247,4 +253,8 @@ Final keys: admin.user-admin-page, admin.user-list-page, admin.users-list
 
 ### 🛠️ برای توسعه:
 - **Log Level**: TRACE
-- **Categories**: همه دسته‌ها 
+- **Categories**: همه دسته‌ها
+
+### 🔧 برای عیب‌یابی API:
+- **Log Level**: DEBUG
+- **Categories**: SYSTEM, TRANSLATION, STRUCTURES, API_LOGS 

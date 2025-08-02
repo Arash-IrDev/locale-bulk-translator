@@ -137,10 +137,10 @@ ${JSON.stringify(translatedContent, null, 2)}`;
     }
 
     private async callAPI(prompt: string): Promise<{ content: string; tokensUsed: TokenUsage }> {
-        this.logger.log('Ollama: Calling API');
-        this.logger.log(`Prompt: ${prompt}`);
-        this.logger.log(`API URL: ${this.apiUrl}`);
-        this.logger.log(`Model: ${this.model}`);
+        this.logger.logApi('Calling API');
+        this.logger.logApi(`Prompt: ${prompt}`);
+        this.logger.logApi(`API URL: ${this.apiUrl}`);
+        this.logger.logApi(`Model: ${this.model}`);
     
         try {
             const requestBody = {
@@ -152,7 +152,7 @@ ${JSON.stringify(translatedContent, null, 2)}`;
                     top_p: 0.9
                 }
             };
-            this.logger.log(`Request Body: ${JSON.stringify(requestBody, null, 2)}`);
+            this.logger.logApi(`Request Body: ${JSON.stringify(requestBody, null, 2)}`);
     
             const response = await axios.post(
                 this.apiUrl,
@@ -165,9 +165,9 @@ ${JSON.stringify(translatedContent, null, 2)}`;
                 }
             );
     
-            this.logger.log('Ollama: API call successful');
-            this.logger.log(`Response Status: ${response.status}`);
-            this.logger.log(`Response Data: ${JSON.stringify(response.data, null, 2)}`);
+            this.logger.logApi('API call successful');
+            this.logger.logApi(`Response Status: ${response.status}`);
+            this.logger.logApi(`Response Data: ${JSON.stringify(response.data, null, 2)}`);
     
             const content = response.data.choices[0].message.content;
             const tokensUsed: TokenUsage = {
@@ -175,55 +175,55 @@ ${JSON.stringify(translatedContent, null, 2)}`;
                 outputTokens: response.data.usage?.completion_tokens || 0
             };
     
-            this.logger.log(`Extracted Content: ${content}`);
-            this.logger.log(`Tokens Used: Input: ${tokensUsed.inputTokens}, Output: ${tokensUsed.outputTokens}`);
+            this.logger.logApi(`Extracted Content: ${content}`);
+            this.logger.logApi(`Tokens Used: Input: ${tokensUsed.inputTokens}, Output: ${tokensUsed.outputTokens}`);
     
             return { content, tokensUsed };
         } catch (error) {
-            this.logger.error('Ollama: API call failed');
+            this.logger.error('API call failed', error, LogCategory.API_LOGS);
             if (axios.isAxiosError(error)) {
-                this.logger.error(`Error Response: ${JSON.stringify(error.response?.data, null, 2)}`);
-                this.logger.error(`Error Status: ${error.response?.status}`);
-                this.logger.error(`Error Message: ${error.message}`);
+                this.logger.error(`Error Response: ${JSON.stringify(error.response?.data, null, 2)}`, undefined, LogCategory.API_LOGS);
+                this.logger.error(`Error Status: ${error.response?.status}`, undefined, LogCategory.API_LOGS);
+                this.logger.error(`Error Message: ${error.message}`, undefined, LogCategory.API_LOGS);
             } else {
-                this.logger.error(`Error: ${error}`);
+                this.logger.error(`Error: ${error}`, undefined, LogCategory.API_LOGS);
             }
             throw error;
         }
     }
 
     private parseResponse(response: string): any {
-        this.logger.log('Ollama: Parsing response');
-        this.logger.log(`Ollama: Response starts with: ${response.substring(0, 100)}...`);
+        this.logger.logApi('Parsing response');
+        this.logger.logApi(`Response starts with: ${response.substring(0, 100)}...`);
         
         try {
             // First, try to find JSON in the response using a more robust pattern
             const jsonMatch = response.match(/\{[\s\S]*\}/);
             if (jsonMatch) {
                 const jsonString = jsonMatch[0];
-                this.logger.log(`Ollama: Found JSON match, length: ${jsonString.length}`);
-                this.logger.log(`Ollama: JSON preview: ${jsonString.substring(0, 200)}...`);
+                this.logger.logApi(`Found JSON match, length: ${jsonString.length}`);
+                this.logger.logApi(`JSON preview: ${jsonString.substring(0, 200)}...`);
                 return JSON.parse(jsonString);
             }
             
             // If no JSON found, try to parse the entire response
-            this.logger.log('Ollama: No JSON match found, trying to parse entire response');
+            this.logger.logApi('No JSON match found, trying to parse entire response');
             return JSON.parse(response.trim());
             
         } catch (error) {
-            this.logger.error('Ollama: Failed to parse response as JSON');
-            this.logger.error(`Ollama: Response type: ${typeof response}`);
-            this.logger.error(`Ollama: Response length: ${response.length}`);
-            this.logger.error(`Ollama: Raw response: ${response}`);
+            this.logger.error('Failed to parse response as JSON', error, LogCategory.API_LOGS);
+            this.logger.error(`Response type: ${typeof response}`, undefined, LogCategory.API_LOGS);
+            this.logger.error(`Response length: ${response.length}`, undefined, LogCategory.API_LOGS);
+            this.logger.error(`Raw response: ${response}`, undefined, LogCategory.API_LOGS);
             
             // Try to extract any JSON-like content
             const possibleJson = response.match(/\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/);
             if (possibleJson) {
-                this.logger.log('Ollama: Attempting to parse possible JSON content');
+                this.logger.logApi('Attempting to parse possible JSON content');
                 try {
                     return JSON.parse(possibleJson[0]);
                 } catch (secondError) {
-                    this.logger.error('Ollama: Second parsing attempt also failed');
+                    this.logger.error('Second parsing attempt also failed', secondError, LogCategory.API_LOGS);
                 }
             }
             
@@ -232,7 +232,7 @@ ${JSON.stringify(translatedContent, null, 2)}`;
     }
 
     private parseValidationResponse(response: string): boolean {
-        this.logger.log('Ollama: Parsing validation response');
+        this.logger.logApi('Parsing validation response');
         return response.toLowerCase().includes('true');
     }
 } 

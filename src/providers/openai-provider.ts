@@ -102,45 +102,45 @@ export class OpenAIProvider implements ILLMProvider {
 
 
     private async callAPI(prompt: string): Promise<{ content: string; tokensUsed: TokenUsage }> {
-        this.logger.log('OpenAI: Calling API');
-        this.logger.log(`user prompt: ${prompt}`);
+        this.logger.logApi('Calling API');
+        this.logger.logApi(`user prompt: ${prompt}`);
         try {
             const completion = await this.client.chat.completions.create({
                 messages: [{ role: 'user', content: prompt }],
                 model: this.llmModel,
             });
             const result = completion.choices[0].message.content || '';
-            this.logger.log(`llm result: ${result}`);
+            this.logger.logApi(`llm result: ${result}`);
             const tokensUsed: TokenUsage = {
                 inputTokens: completion.usage?.prompt_tokens || 0,
                 outputTokens: completion.usage?.completion_tokens || 0
             };
-            this.logger.log('OpenAI: API call successful');
+            this.logger.logApi('API call successful');
             return { content: result, tokensUsed };
         } catch (error) {
-            this.logger.error('OpenAI: API call failed', error);
+            this.logger.error('API call failed', error, LogCategory.API_LOGS);
             throw error;
         }
     }
 
     private parseResponse(response: string): any {
-        this.logger.log('OpenAI: Parsing response');
+        this.logger.logApi('Parsing response');
         try {
             const jsonMatch = response.match(/\{[\s\S]*\}/);
             if (jsonMatch) {
-                this.logger.log('OpenAI: JSON part extracted successfully');
+                this.logger.logApi('JSON part extracted successfully');
                 return JSON.parse(jsonMatch[0]);
             } else {
                 throw new Error("No valid JSON found in the response");
             }
         } catch (error) {
-            this.logger.error('OpenAI: Failed to parse response as JSON');
+            this.logger.error('Failed to parse response as JSON', error, LogCategory.API_LOGS);
             throw new Error("Failed to parse OpenAI response as JSON");
         }
     }
 
     private parseValidationResponse(response: string): boolean {
-        this.logger.log('OpenAI: Parsing validation response');
+        this.logger.logApi('Parsing validation response');
         return response.toLowerCase().includes('true');
     }
 }

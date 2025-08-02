@@ -63,6 +63,10 @@
           "title": "i18n Nexus: Toggle Structure Logs"
         },
         {
+          "command": "i18n-nexus.toggleApiLogs",
+          "title": "i18n Nexus: Toggle API Logs"
+        },
+        {
           "command": "i18n-nexus.streamingTranslation",
           "title": "i18n Nexus: Translate File"
         },
@@ -90,6 +94,9 @@
         },
         {
           "command": "i18n-nexus.toggleStructureLogs"
+        },
+        {
+          "command": "i18n-nexus.toggleApiLogs"
         },
         {
           "command": "i18n-nexus.streamingTranslation"

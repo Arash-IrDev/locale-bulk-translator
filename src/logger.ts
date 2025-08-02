@@ -13,7 +13,8 @@ export enum LogCategory {
     TRANSLATION = 'TRANSLATION',
     PROVIDER = 'PROVIDER',
     UI = 'UI',
-    STRUCTURES = 'STRUCTURES'
+    STRUCTURES = 'STRUCTURES',
+    API_LOGS = 'API_LOGS'
 }
 
 export class Logger {
@@ -73,6 +74,11 @@ export class Logger {
     // Translation logging (controlled by category)
     public logTranslation(message: string): void {
         this.info(message, LogCategory.TRANSLATION);
+    }
+
+    // API logging (controlled by category)
+    public logApi(message: string): void {
+        this.debug(message, LogCategory.API_LOGS);
     }
 
     // Private logging method

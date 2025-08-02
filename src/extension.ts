@@ -103,12 +103,19 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.window.showInformationMessage(`Structure logs ${status}`);
     });
 
+    let toggleApiLogsDisposable = vscode.commands.registerCommand('i18n-nexus.toggleApiLogs', () => {
+        logger.toggleCategory(LogCategory.API_LOGS);
+        const status = logger.isCategoryEnabled(LogCategory.API_LOGS) ? 'enabled' : 'disabled';
+        vscode.window.showInformationMessage(`API logs ${status}`);
+    });
+
     context.subscriptions.push(
         configureModelDisposable,
         toggleDebugOutputDisposable,
         setLogLevelDisposable,
         toggleProviderLogsDisposable,
-        toggleStructureLogsDisposable
+        toggleStructureLogsDisposable,
+        toggleApiLogsDisposable
     );
 
     // Register streaming translation command

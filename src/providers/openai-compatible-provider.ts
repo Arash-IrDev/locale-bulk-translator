@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import axios from 'axios';
 import { ILLMProvider, TranslationResult, ValidationResult, TokenUsage } from '../llm-provider.interface';
-import { Logger } from '../logger';
+import { Logger, LogCategory } from '../logger';
 
 export class OpenAICompatibleProvider implements ILLMProvider {
     private apiKey: string = '';
@@ -14,59 +14,59 @@ export class OpenAICompatibleProvider implements ILLMProvider {
         this.apiUrl = config.get('llmApiUrl') || 'https://api.openai.com/v1/responses';
         this.model = config.get('llmModel') || 'gpt-4o';
         this.logger = logger;
-        this.logger.log('OpenAICompatibleProvider initialized');
+        this.logger.info('OpenAICompatibleProvider initialized', LogCategory.PROVIDER);
     }
 
     async translate(content: any, targetLang: string): Promise<TranslationResult> {
-        this.logger.log(`OpenAICompatible: Starting translation to ${targetLang}`);
+        this.logger.logTranslation(`Starting translation to ${targetLang}`);
         const prompt = this.generatePrompt(content, targetLang);
         
         try {
             const result = await this.callAPI(prompt);
             const parsedResponse = this.parseResponse(result.content);
-            this.logger.log(`OpenAICompatible: Translation to ${targetLang} completed`);
+            this.logger.logTranslation(`Translation to ${targetLang} completed`);
             return {
                 translatedContent: parsedResponse,
                 tokensUsed: result.tokensUsed
             };
         } catch (error) {
-            this.logger.error('OpenAICompatible: Translation failed', error);
+            this.logger.error('Translation failed', error, LogCategory.PROVIDER);
             throw error;
         }
     }
 
     async compareAndUpdate(oldContent: any, newContent: any, targetLang: string): Promise<TranslationResult> {
-        this.logger.log(`OpenAICompatible: Starting compare and update for ${targetLang}`);
+        this.logger.logTranslation(`Starting compare and update for ${targetLang}`);
         const prompt = this.generateCompareAndUpdatePrompt(oldContent, newContent, targetLang);
         
         try {
             const result = await this.callAPI(prompt);
             const parsedResponse = this.parseResponse(result.content);
-            this.logger.log(`OpenAICompatible: Compare and update for ${targetLang} completed`);
+            this.logger.logTranslation(`Compare and update for ${targetLang} completed`);
             return {
                 translatedContent: parsedResponse,
                 tokensUsed: result.tokensUsed
             };
         } catch (error) {
-            this.logger.error('OpenAICompatible: Compare and update failed', error);
+            this.logger.error('Compare and update failed', error, LogCategory.PROVIDER);
             throw error;
         }
     }
 
     async validateTranslation(originalContent: any, translatedContent: any, targetLang: string): Promise<ValidationResult> {
-        this.logger.log(`OpenAICompatible: Starting translation validation for ${targetLang}`);
+        this.logger.logTranslation(`Starting translation validation for ${targetLang}`);
         const prompt = this.generateValidationPrompt(originalContent, translatedContent, targetLang);
         
         try {
             const result = await this.callAPI(prompt);
             const isValid = this.parseValidationResponse(result.content);
-            this.logger.log(`OpenAICompatible: Translation validation for ${targetLang} completed`);
+            this.logger.logTranslation(`Translation validation for ${targetLang} completed`);
             return {
                 isValid,
                 tokensUsed: result.tokensUsed
             };
         } catch (error) {
-            this.logger.error('OpenAICompatible: Translation validation failed', error);
+            this.logger.error('Translation validation failed', error, LogCategory.PROVIDER);
             throw error;
         }
     }
@@ -88,18 +88,18 @@ export class OpenAICompatibleProvider implements ILLMProvider {
     }
 
     private async callAPI(prompt: string): Promise<{ content: string; tokensUsed: TokenUsage }> {
-        this.logger.log('OpenAICompatible: Calling API');
-        this.logger.log(`Prompt: ${prompt}`);
-        this.logger.log(`API URL: ${this.apiUrl}`);
-        this.logger.log(`Model: ${this.model}`);
-        //this.logger.log(`Key: ${this.apiKey}`);
+        this.logger.logApi('Calling API');
+        this.logger.logApi(`Prompt: ${prompt}`);
+        this.logger.logApi(`API URL: ${this.apiUrl}`);
+        this.logger.logApi(`Model: ${this.model}`);
+        //this.logger.logApi(`Key: ${this.apiKey}`);
     
         try {
             const requestBody = {
                 model: this.model,
                 messages: [{ role: "user", content: prompt }]
             };
-            this.logger.log(`Request Body: ${JSON.stringify(requestBody, null, 2)}`);
+            this.logger.logApi(`Request Body: ${JSON.stringify(requestBody, null, 2)}`);
     
             const response = await axios.post(
                 this.apiUrl,
@@ -112,10 +112,10 @@ export class OpenAICompatibleProvider implements ILLMProvider {
                 }
             );
     
-            this.logger.log('OpenAICompatible: API call successful');
-            this.logger.log(`Response Status: ${response.status}`);
-            this.logger.log(`Response Headers: ${JSON.stringify(response.headers, null, 2)}`);
-            this.logger.log(`Response Data: ${JSON.stringify(response.data, null, 2)}`);
+            this.logger.logApi('API call successful');
+            this.logger.logApi(`Response Status: ${response.status}`);
+            this.logger.logApi(`Response Headers: ${JSON.stringify(response.headers, null, 2)}`);
+            this.logger.logApi(`Response Data: ${JSON.stringify(response.data, null, 2)}`);
     
             const content = response.data.choices[0].message.content;
             const tokensUsed: TokenUsage = {
@@ -123,41 +123,41 @@ export class OpenAICompatibleProvider implements ILLMProvider {
                 outputTokens: response.data.usage?.completion_tokens || 0
             };
     
-            this.logger.log(`Extracted Content: ${content}`);
-            this.logger.log(`Tokens Used: Input: ${tokensUsed.inputTokens}, Output: ${tokensUsed.outputTokens}`);
+            this.logger.logApi(`Extracted Content: ${content}`);
+            this.logger.logApi(`Tokens Used: Input: ${tokensUsed.inputTokens}, Output: ${tokensUsed.outputTokens}`);
     
             return { content, tokensUsed };
         } catch (error) {
-            this.logger.error('OpenAICompatible: API call failed');
+            this.logger.error('API call failed', error, LogCategory.API_LOGS);
             if (axios.isAxiosError(error)) {
-                this.logger.error(`Error Response: ${JSON.stringify(error.response?.data, null, 2)}`);
-                this.logger.error(`Error Status: ${error.response?.status}`);
-                this.logger.error(`Error Headers: ${JSON.stringify(error.response?.headers, null, 2)}`);
+                this.logger.error(`Error Response: ${JSON.stringify(error.response?.data, null, 2)}`, undefined, LogCategory.API_LOGS);
+                this.logger.error(`Error Status: ${error.response?.status}`, undefined, LogCategory.API_LOGS);
+                this.logger.error(`Error Headers: ${JSON.stringify(error.response?.headers, null, 2)}`, undefined, LogCategory.API_LOGS);
             } else {
-                this.logger.error(`Error: ${error}`);
+                this.logger.error(`Error: ${error}`, undefined, LogCategory.API_LOGS);
             }
             throw error;
         }
     }
 
     private parseResponse(response: string): any {
-        this.logger.log('OpenAICompatible: Parsing response');
+        this.logger.logApi('Parsing response');
         try {
             const jsonMatch = response.match(/\{[\s\S]*\}/);
             if (jsonMatch) {
-                this.logger.log('OpenAICompatible: JSON part extracted successfully');
+                this.logger.logApi('JSON part extracted successfully');
                 return JSON.parse(jsonMatch[0]);
             } else {
                 throw new Error("No valid JSON found in the response");
             }
         } catch (error) {
-            this.logger.error('OpenAICompatible: Failed to parse response as JSON');
+            this.logger.error('Failed to parse response as JSON', error, LogCategory.API_LOGS);
             throw new Error("Failed to parse OpenAICompatible response as JSON");
         }
     }
 
     private parseValidationResponse(response: string): boolean {
-        this.logger.log('OpenAICompatible: Parsing validation response');
+        this.logger.logApi('Parsing validation response');
         return response.toLowerCase().includes('true');
     }
 }

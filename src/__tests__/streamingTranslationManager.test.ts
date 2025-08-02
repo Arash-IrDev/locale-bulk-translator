@@ -93,6 +93,7 @@ describe('StreamingTranslationManager', () => {
             logStructures: jest.fn(),
             logProvider: jest.fn(),
             logTranslation: jest.fn(),
+            logApi: jest.fn(),
             setLogLevel: jest.fn(),
             getLogLevel: jest.fn(),
             enableCategory: jest.fn(),
