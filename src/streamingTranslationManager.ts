@@ -929,166 +929,126 @@ Translation Summary:
 
 
 
-    private mergeContents(baseContent: any, targetContent: any, translatedContent: any): any {
-        const merged = JSON.parse(JSON.stringify(baseContent));
-
-        // Convert translatedContent to flat structure for easier processing
-        const flatTranslated = this.flattenNestedContent(translatedContent);
-
-        for (const key in flatTranslated) {
-            if (flatTranslated[key] === null) {
-                // Delete key from nested structure
-                this.deleteNestedProperty(merged, key);
-            } else {
-                // Add or update key in nested structure
-                this.setNestedProperty(merged, key, flatTranslated[key]);
-            }
-        }
-
-        return merged;
-    }
-
     /**
-     * Convert nested content to original flat structure
+     * Recursively flatten a nested object into a map of dot-notation keys.
+     *
+     * e.g. { a: { b: 1 }, c: 2 }
+     *      → { "a.b":  1, "c": 2 }
      */
-    private flattenNestedContent(nestedContent: any, prefix: string = ''): Record<string, any> {
-        const flattened: Record<string, any> = {};
-
-        for (const key in nestedContent) {
-            const value = nestedContent[key];
-            const fullKey = prefix ? `${prefix}.${key}` : key;
-
-            if (value && typeof value === 'object' && !Array.isArray(value)) {
-                Object.assign(flattened, this.flattenNestedContent(value, fullKey));
-            } else {
-                flattened[fullKey] = value;
-            }
+    private flattenNestedContent(obj: any, parentKey = ""): Record<string, any> {
+        const out: Record<string, any> = {};
+        for (const key of Object.keys(obj)) {
+        const val = obj[key];
+        const dotted = parentKey ? `${parentKey}.${key}` : key;
+        if (val !== null && typeof val === "object" && !Array.isArray(val)) {
+            Object.assign(out, this.flattenNestedContent(val, dotted));
+        } else {
+            out[dotted] = val;
         }
-
-        return flattened;
-    }
-
-    /**
-     * Convert flat structure to nested object
-     */
-    private unflattenContent(flatContent: Record<string, any>): any {
-        const nested: any = {};
-
-        for (const key in flatContent) {
-            const value = flatContent[key];
-            const keyParts = key.split('.');
-
-            let current = nested;
-            for (let i = 0; i < keyParts.length - 1; i++) {
-                const part = keyParts[i];
-                if (!current[part] || typeof current[part] !== 'object') {
-                    current[part] = {};
-                }
-                current = current[part];
-            }
-
-            current[keyParts[keyParts.length - 1]] = value;
         }
-
-        return nested;
+        return out;
     }
-
+    
     /**
-     * Convert LLM response to original structure - Updated version
+     * Rebuild a nested object from a map of dot-notation keys.
+     *
+     * e.g. { "a.b": 1, "c": 2 }
+     *      → { a: { b: 1 }, c: 2 }
      */
-    private convertLLMResponseToOriginalStructure(llmResponse: any, originalChunk: any): any {
-        this.logger.log(`Converting LLM response to original structure...`);
-        this.logger.log(`Original chunk keys: ${Object.keys(originalChunk).join(', ')}`);
-        this.logger.log(`LLM response keys: ${Object.keys(llmResponse).join(', ')}`);
-        
-        // First, convert LLM response to flat structure
-        const flattenedResponse = this.flattenNestedContent(llmResponse);
-        this.logger.log(`Flattened response keys: ${Object.keys(flattenedResponse).join(', ')}`);
-        
-        // Now, we need to reconstruct the original structure
+    private unflattenContent(flat: Record<string, any>): any {
         const result: any = {};
-        
-        for (const originalKey in originalChunk) {
-            if (flattenedResponse.hasOwnProperty(originalKey)) {
-                result[originalKey] = flattenedResponse[originalKey];
-            } else {
-                // If the key was not in the LLM response, use the original
-                result[originalKey] = originalChunk[originalKey];
+        for (const dotted of Object.keys(flat)) {
+        const parts = dotted.split(".");
+        let cursor = result;
+        for (let i = 0; i < parts.length - 1; i++) {
+            const part = parts[i];
+            if (!(part in cursor) || typeof cursor[part] !== "object") {
+            cursor[part] = {};
             }
+            cursor = cursor[part];
         }
-        
-        this.logger.log(`Final result keys: ${Object.keys(result).join(', ')}`);
+        cursor[parts[parts.length - 1]] = flat[dotted];
+        }
         return result;
     }
-
+    
     /**
-     * Convert LLM response to original structure - New improved version
+     * Invert the LLM’s grouping/flattening so that:
+     * 
+     * 1. We take the LLM response, which is shaped like
+     *    {
+     *      [rootKey]: {
+     *        `${rootKey}.${subKey}`: {
+     *          `${rootKey}.${subKey}.${leafPath}`: translatedValue,
+     *          …
+     *        },
+     *        …
+     *      }
+     *    }
+     * 
+     * 2. We rebuild:
+     *    {
+     *      [rootKey]: {
+     *        [subKey]: {
+     *          [leafPath]: translatedValue,
+     *          …
+     *        },
+     *        …
+     *      }
+     *    }
      */
-    private convertLLMResponseToOriginalStructureNew(llmResponse: any, originalChunk: any): any {
-        const result: any = {};
+    private convertLLMResponseToOriginalStructureNew(
+        llmResponse: Record<string, any>,
+        originalChunk: Record<string, any>
+    ): Record<string, any> {
+        const result: Record<string, any> = {};
     
-        for (const originalKey in originalChunk) {
-            if (llmResponse.hasOwnProperty(originalKey)) {
-                // 1️⃣ flatten llmResponse[originalKey]
-                const flattened = this.flattenNestedContent(llmResponse[originalKey]);
+        // For each top-level key we sent (e.g. "access-control")
+        for (const rootKey of Object.keys(originalChunk)) {
+        const grouped = llmResponse[rootKey];
+        if (!grouped || typeof grouped !== "object") {
+            // If LLM gave us nothing, fall back to the original
+            result[rootKey] = originalChunk[rootKey];
+            continue;
+        }
     
-                const cleanedEntries = Object.entries(flattened).map(([key, value]) => {
-                    // 🔹 remove first parent prefix: access-control.access-control.* → access-control.*
-                    const cleanedKey = key.replace(new RegExp(`^${originalKey}\\.`, "g"), "");
-                    return [cleanedKey, value];
-                });
+        // Prepare an object to hold the reconstructed subtree
+        const reconstructed: Record<string, any> = {};
     
-                // 2️⃣ unflatten back to nested structure
-                const rebuilt = this.unflattenContent(Object.fromEntries(cleanedEntries));
-    
-                // 3️⃣ قرار دادن در ساختار اصلی
-                result[originalKey] = rebuilt;
-            } else {
-                // ⚠️ fallback logic (مثل حالت قبلی)
-                const flattened = this.flattenNestedContent(llmResponse);
-    
-                const filteredEntries = Object.entries(flattened)
-                    .filter(([key]) => key.startsWith(originalKey + "."))
-                    .map(([key, value]) => {
-                        const cleanedKey = key.replace(
-                            new RegExp(`${originalKey}\\.${originalKey}\\.`,"g"),
-                            `${originalKey}.`
-                        ).replace(new RegExp(`^${originalKey}\\.`, "g"), ""); // حذف اولین parent
-                        return [cleanedKey, value];
-                    });
-    
-                if (filteredEntries.length > 0) {
-                    const rebuiltSubtree = this.unflattenContent(Object.fromEntries(filteredEntries));
-                    result[originalKey] = rebuiltSubtree;
-                }
+        // Each groupingKey looks like "access-control.add-permission"
+        for (const groupingKey of Object.keys(grouped)) {
+            const groupValue = grouped[groupingKey];
+            if (!groupValue || typeof groupValue !== "object") {
+            continue;
             }
+    
+            // 1) Flatten this group’s nested object to dot-notation keys
+            const flatGroup = this.flattenNestedContent(groupValue);
+    
+            // 2) Strip exactly the groupingKey + "." prefix from each flat key
+            const cleanedFlat: Record<string, any> = {};
+            const prefix = groupingKey + ".";
+            for (const flatKey of Object.keys(flatGroup)) {
+            if (flatKey.startsWith(prefix)) {
+                const stripped = flatKey.substring(prefix.length);
+                cleanedFlat[stripped] = flatGroup[flatKey];
+            }
+            }
+    
+            // 3) Rebuild a nested object from the cleaned map
+            const rebuilt = this.unflattenContent(cleanedFlat);
+    
+            // 4) Derive the true property name (the part after rootKey + ".")
+            const subKey = groupingKey.slice(rootKey.length + 1);
+    
+            // 5) Assign into our final shape
+            reconstructed[subKey] = rebuilt;
+        }
+    
+        result[rootKey] = reconstructed;
         }
     
         return result;
-    }
-
-    private setNestedProperty(obj: any, path: string, value: any) {
-        const keys = path.split('.');
-        let current = obj;
-        for (let i = 0; i < keys.length - 1; i++) {
-            if (!(keys[i] in current)) {
-                current[keys[i]] = {};
-            }
-            current = current[keys[i]];
-        }
-        current[keys[keys.length - 1]] = value;
-    }
-
-    private deleteNestedProperty(obj: any, path: string) {
-        const keys = path.split('.');
-        let current = obj;
-        for (let i = 0; i < keys.length - 1; i++) {
-            if (!(keys[i] in current)) {
-                return;
-            }
-            current = current[keys[i]];
-        }
-        delete current[keys[keys.length - 1]];
     }
 
     public cancelTranslation(): void {
