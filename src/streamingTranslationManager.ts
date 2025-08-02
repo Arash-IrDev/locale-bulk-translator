@@ -58,7 +58,6 @@ export class StreamingTranslationManager {
 
   private logTranslationStructures(
     chunkId: string,
-    originalData: any,
     inputToLLM: any,
     llmResponse: any,
     finalStructure: any
@@ -69,11 +68,6 @@ export class StreamingTranslationManager {
     this.logger.logStructures(separator);
     this.logger.logStructures(`🔄 TRANSLATION STRUCTURES FOR ${chunkId.toUpperCase()}`);
     this.logger.logStructures(separator);
-
-    this.logger.logStructures(`📄 ORIGINAL DATA STRUCTURE (${Object.keys(originalData).length} keys):`);
-    this.logger.logStructures(sectionSeparator);
-    this.logger.logStructures(JSON.stringify(originalData, null, 2));
-    this.logger.logStructures('');
 
     this.logger.logStructures(`📤 INPUT TO LLM (${Object.keys(inputToLLM).length} keys):`);
     this.logger.logStructures(sectionSeparator);
@@ -92,7 +86,6 @@ export class StreamingTranslationManager {
 
     this.logger.logStructures(`📊 STRUCTURE COMPARISON SUMMARY:`);
     this.logger.logStructures(sectionSeparator);
-    this.logger.logStructures(`Original keys: ${Object.keys(originalData).join(', ')}`);
     this.logger.logStructures(`Input keys: ${Object.keys(inputToLLM).join(', ')}`);
     this.logger.logStructures(`Response keys: ${Object.keys(llmResponse).join(', ')}`);
     this.logger.logStructures(`Final keys: ${Object.keys(finalStructure).join(', ')}`);
@@ -190,7 +183,7 @@ export class StreamingTranslationManager {
         try {
           this.updateProgress(i + 1, chunks.length, chunkId, totalTokens, acceptedChunks, rejectedChunks);
 
-          const result = await this.translateChunk(chunk, toTranslate, lang, chunkId, i + 1, chunks.length);
+          const result = await this.translateChunk(chunk, lang, chunkId, i + 1, chunks.length);
           const applied = await this.applyChunkToFile(result);
 
           if (applied) {
@@ -521,7 +514,6 @@ Translation Summary:
 
   private async translateChunk(
     chunk: Record<string, any>,
-    originalData: Record<string, any>,
     lang: string,
     chunkId: string,
     chunkNumber: number,
@@ -532,7 +524,6 @@ Translation Summary:
     const result = await this.llmService.translate(chunk, lang);
     this.logTranslationStructures(
       chunkId,
-      originalData,
       chunk,
       result.translatedContent,
       this.unflattenContent(result.translatedContent)
