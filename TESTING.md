@@ -27,10 +27,9 @@ npm run compile
 
 ### 2. Testing Commands
 In the Development Host window:
-- `Cmd+Shift+P` → "i18n Nexus: Translate Files"
+- `Cmd+Shift+P` → "i18n Nexus: Translate File"
 - `Cmd+Shift+P` → "i18n Nexus: Configure AI Model"
 - `Cmd+Shift+P` → "Show i18n Nexus Configuration"
-- `Cmd+Shift+P` → "i18n Nexus: Translate Current File"
 
 ### 3. Testing with Real Files
 1. Create a test project with locale files
@@ -44,7 +43,7 @@ In the Development Host window:
 src/
 ├── __tests__/
 │   ├── extension.test.ts      # Extension activation tests
-│   ├── translationManager.test.ts  # TranslationManager tests
+│   ├── streamingTranslationManager.test.ts  # StreamingTranslationManager tests
 │   └── setup.ts              # Jest setup
 ├── __mocks__/
 │   └── vscode.ts             # VS Code API mocks
@@ -64,7 +63,7 @@ src/
 npm test -- --watch
 
 # Run specific test file
-npm test -- translationManager.test.ts
+npm test -- streamingTranslationManager.test.ts
 
 # Run with verbose output
 npm test -- --verbose
@@ -80,7 +79,7 @@ npm test -- --verbose
 ## 🎯 Test Coverage Goals
 
 - [x] Extension activation
-- [x] Basic TranslationManager functionality
+- [x] Basic StreamingTranslationManager functionality
 - [ ] LLM provider integration
 - [ ] File translation workflows
 - [ ] Configuration management

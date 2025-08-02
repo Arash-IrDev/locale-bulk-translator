@@ -1,8 +1,6 @@
 // The vscode module contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in the code below
 import * as vscode from 'vscode';
-import { TranslationManager } from './translationManager';
-import { ChunkedTranslationManager } from './chunkedTranslationManager';
 import { StreamingTranslationManager } from './streamingTranslationManager';
 import { LanguageSelector } from './languageSelector';
 import { ModelConfigurator } from './modelConfigurator';
@@ -21,14 +19,10 @@ export function activate(context: vscode.ExtensionContext) {
     }
 
     // Initialize managers without API key validation during activation
-    let translationManager: TranslationManager | undefined;
-    let chunkedTranslationManager: ChunkedTranslationManager | undefined;
     let streamingTranslationManager: StreamingTranslationManager | undefined;
     let modelConfigurator: ModelConfigurator | undefined;
     
     try {
-        translationManager = new TranslationManager(logger, channel);
-        chunkedTranslationManager = new ChunkedTranslationManager(logger, channel);
         streamingTranslationManager = new StreamingTranslationManager(logger, channel);
         modelConfigurator = new ModelConfigurator(logger, channel);
         logger.log('All managers initialized');
@@ -65,29 +59,6 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(showConfigDisposable);
 
-    // Register translation command
-    let translateDisposable = vscode.commands.registerCommand('i18n-nexus.translateFiles', () => {
-        console.log('Translation command triggered');
-        if (!translationManager) {
-            vscode.window.showErrorMessage('Translation manager not initialized. Please check your configuration.');
-            return;
-        }
-        try {
-            translationManager.translate().catch(error => {
-                console.error('Error occurred during translation:', error);
-                vscode.window.showErrorMessage(`Translation failed: ${error.message}`);
-            });
-            console.log('Translation operation completed');
-        } catch (error) {
-            console.error('Error occurred during translation:', error);
-            if (error instanceof Error) {
-                vscode.window.showErrorMessage(`Translation failed: ${error.message}`);
-            } else {
-                vscode.window.showErrorMessage('Unknown error occurred during translation');
-            }
-        }
-    });
-
     // Register configure model command
     let configureModelDisposable = vscode.commands.registerCommand('i18n-nexus.configureModel', () => {
         logger.log('Configure model command triggered');
@@ -107,53 +78,9 @@ export function activate(context: vscode.ExtensionContext) {
     logger.log('Toggle debug output command registered');
 
     context.subscriptions.push(
-        translateDisposable,
         configureModelDisposable,
         toggleDebugOutputDisposable
     );
-
-
-    // Add the following code in the extension.ts file
-
-    // Register translate current file command
-    let translateCurrentFileDisposable = vscode.commands.registerCommand('i18n-nexus.translateCurrentFile', () => {
-        logger.log('Translate current file command triggered');
-        if (!translationManager) {
-            vscode.window.showErrorMessage('Translation manager not initialized. Please check your configuration.');
-            return;
-        }
-        const activeEditor = vscode.window.activeTextEditor;
-        if (activeEditor) {
-            const filePath = activeEditor.document.uri.fsPath;
-            if (!isValidTranslationFile(filePath)) {
-                vscode.window.showErrorMessage('Please select a valid translation JSON file. Output channels and non-JSON files cannot be translated.');
-                return;
-            }
-            translationManager.translateFile(activeEditor.document.uri);
-        } else {
-            vscode.window.showErrorMessage('No active file to translate');
-        }
-    });
-
-    // Register translate large file command
-    let translateLargeFileDisposable = vscode.commands.registerCommand('i18n-nexus.translateLargeFile', () => {
-        logger.log('Translate large file command triggered');
-        if (!chunkedTranslationManager) {
-            vscode.window.showErrorMessage('Chunked translation manager not initialized. Please check your configuration.');
-            return;
-        }
-        const activeEditor = vscode.window.activeTextEditor;
-        if (activeEditor) {
-            const filePath = activeEditor.document.uri.fsPath;
-            if (!isValidTranslationFile(filePath)) {
-                vscode.window.showErrorMessage('Please select a valid translation JSON file. Output channels and non-JSON files cannot be translated.');
-                return;
-            }
-            chunkedTranslationManager.translateLargeFile(activeEditor.document.uri);
-        } else {
-            vscode.window.showErrorMessage('No active file to translate');
-        }
-    });
 
     // Register streaming translation command
     let streamingTranslationDisposable = vscode.commands.registerCommand('i18n-nexus.streamingTranslation', () => {
@@ -180,11 +107,6 @@ export function activate(context: vscode.ExtensionContext) {
         logger.log('Cancel translation command triggered');
         let cancelled = false;
         
-        if (chunkedTranslationManager && chunkedTranslationManager.isActive()) {
-            chunkedTranslationManager.cancelTranslation();
-            cancelled = true;
-        }
-        
         if (streamingTranslationManager && streamingTranslationManager.isActive()) {
             streamingTranslationManager.cancelTranslation();
             cancelled = true;
@@ -205,9 +127,6 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
-
-
-
     // Register open settings command
     let openSettingsDisposable = vscode.commands.registerCommand('i18n-nexus.openSettings', () => {
         logger.log('Open settings command triggered');
@@ -216,8 +135,6 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Add newly registered commands to context.subscriptions
     context.subscriptions.push(
-        translateCurrentFileDisposable,
-        translateLargeFileDisposable,
         streamingTranslationDisposable,
         cancelTranslationDisposable,
         acceptAllChangesDisposable,

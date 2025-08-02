@@ -10,12 +10,12 @@ This project is currently in **early development** – more features, documentat
 
 - Detect `locales/` folders (or any translation key/value files) in your project.
 - Translate values into multiple languages using GPT, Gemini, or local LLMs.
-- Handle **massive files** (20k+ lines) with smart chunking.
+- Handle **massive files** (20k+ lines) with smart chunking and streaming.
 - Preserve keys, placeholders, formatting, and structure perfectly.
 - Provide **diff view** to preview translations and approve or reject changes before applying.
 - Stream huge locale files without loading them entirely in memory.
 - Dynamically adjust batch size based on token usage.
-- Optional parallel processing of translation batches.
+- Auto-apply translations with real-time progress tracking.
 ---
 
 ## 📦 Current Status
@@ -36,11 +36,14 @@ This project is currently in **early development** – more features, documentat
 
 ---
 
-## 🔍 Diff Preview
+## 🔍 Translation Mode
 
-i18n Nexus opens a diff view after generating translations so you can review the proposed changes. Choose **Apply Changes** to write the file or **Cancel** to keep the original.
-
-This behaviour can be turned off by setting `"i18nNexus.enableDiffView": false` in your VS Code settings.
+i18n Nexus uses **Streaming Translation (Auto-Apply)** mode which:
+- Processes files in chunks for optimal performance
+- Shows real-time progress with diff views for each chunk
+- Automatically applies approved translations
+- Provides cancel and accept-all options during translation
+- Handles large files efficiently without memory issues
 
 ---
 
@@ -48,13 +51,15 @@ This behaviour can be turned off by setting `"i18nNexus.enableDiffView": false` 
 
 This repo will soon open for contributions. Until then, development is handled on the `main` branch, with upstream updates tracked via `upstream-main`.
 
-## Streaming & Batch Options
+## Configuration Options
 
-The extension can stream extremely large translation files. Configure the following settings in VS Code:
+The extension can handle extremely large translation files. Configure the following settings in VS Code:
 
-- `i18nNexus.translationBatchSize` – number of keys processed per batch when streaming.
-- `i18nNexus.batchTokenLimit` – approximate token threshold before the batch size is reduced.
-- `i18nNexus.parallelBatchCount` – how many batches to translate in parallel.
+- `i18nNexus.chunkSize` – maximum characters per chunk for optimal processing
+- `i18nNexus.autoSaveInterval` – delay between chunk processing for better visual feedback
+- `i18nNexus.translationBatchSize` – number of keys processed per batch when streaming
+- `i18nNexus.batchTokenLimit` – approximate token threshold before the batch size is reduced
+- `i18nNexus.parallelBatchCount` – how many batches to translate in parallel
 
 ---
 

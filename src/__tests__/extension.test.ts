@@ -121,11 +121,8 @@ describe('Extension', () => {
             // این تست بررسی می‌کند که همه دستورات لازم ثبت شده‌اند
             const expectedCommands = [
                 'i18n-nexus.showConfig',
-                'i18n-nexus.translateFiles',
                 'i18n-nexus.configureModel',
                 'i18n-nexus.toggleDebugOutput',
-                'i18n-nexus.translateCurrentFile',
-                'i18n-nexus.translateLargeFile',
                 'i18n-nexus.streamingTranslation',
                 'i18n-nexus.cancelTranslation',
                 'i18n-nexus.openSettings'
@@ -133,7 +130,7 @@ describe('Extension', () => {
 
             // در واقعیت، این دستورات در activate function ثبت می‌شوند
             // این تست فقط برای مستندسازی است
-            expect(expectedCommands).toHaveLength(9);
+            expect(expectedCommands).toHaveLength(6);
         });
     });
 

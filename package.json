@@ -32,45 +32,33 @@
   ],
   "activationEvents": [],
   "main": "./out/extension.js",
-  "contributes": {
-    "commands": [
-      {
-        "command": "i18n-nexus.translateFiles",
-        "title": "i18n Nexus: Translate Files"
-      },
-      {
-        "command": "i18n-nexus.configureModel",
-        "title": "i18n Nexus: Configure AI Model"
-      },
-      {
-        "command": "i18n-nexus.showConfig",
-        "title": "i18n Nexus: Show Configuration"
-      },
-      {
-        "command": "i18n-nexus.translateCurrentFile",
-        "title": "i18n Nexus: Translate Current File"
-      },
-      {
-        "command": "i18n-nexus.openSettings",
-        "title": "i18n Nexus: Open Settings"
-      },
-      {
-        "command": "i18n-nexus.toggleDebugOutput",
-        "title": "i18n Nexus: Toggle Debug Output"
-      },
-      {
-        "command": "i18n-nexus.translateLargeFile",
-        "title": "i18n Nexus: Translate Large File (Chunked)"
-      },
-      {
-        "command": "i18n-nexus.streamingTranslation",
-        "title": "i18n Nexus: Streaming Translation (Auto-Apply)"
-      },
-      {
-        "command": "i18n-nexus.cancelTranslation",
-        "title": "i18n Nexus: Cancel Translation"
-      }
-    ],
+      "contributes": {
+      "commands": [
+        {
+          "command": "i18n-nexus.configureModel",
+          "title": "i18n Nexus: Configure AI Model"
+        },
+        {
+          "command": "i18n-nexus.showConfig",
+          "title": "i18n Nexus: Show Configuration"
+        },
+        {
+          "command": "i18n-nexus.openSettings",
+          "title": "i18n Nexus: Open Settings"
+        },
+        {
+          "command": "i18n-nexus.toggleDebugOutput",
+          "title": "i18n Nexus: Toggle Debug Output"
+        },
+        {
+          "command": "i18n-nexus.streamingTranslation",
+          "title": "i18n Nexus: Translate File"
+        },
+        {
+          "command": "i18n-nexus.cancelTranslation",
+          "title": "i18n Nexus: Cancel Translation"
+        }
+      ],
     "keybindings": [
       {
         "command": "i18n-nexus.toggleDebugOutput",
@@ -102,16 +90,7 @@
           "default": 50,
           "description": "Number of keys in each chunk for large file translation. Smaller chunks provide better control but slower processing."
         },
-        "i18nNexus.enableChunkedTranslation": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable chunked translation for large files with interactive review."
-        },
-        "i18nNexus.enableStreamingTranslation": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable streaming translation that applies changes directly without stopping for user confirmation."
-        },
+
         "i18nNexus.autoSaveInterval": {
           "type": "number",
           "default": 100,
