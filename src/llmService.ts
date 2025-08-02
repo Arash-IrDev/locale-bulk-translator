@@ -24,13 +24,13 @@ export class LLMService {
         this.batchTokenLimit = config.get('batchTokenLimit', 8000);
         this.parallelBatchCount = Math.max(1, config.get('parallelBatchCount', 1));
         // Don't initialize provider during construction to avoid API key validation errors
-        this.logger.log('LLMService initialized (provider will be initialized on first use)');
+        // this.logger.log('LLMService initialized (provider will be initialized on first use)');
     }
 
     private initializeProvider() {
         const config = vscode.workspace.getConfiguration('i18nNexus');
         const providerName = config.get('llmProvider') || 'openai';
-        this.logger.log(`Initializing LLM provider: ${providerName}`);
+        // this.logger.log(`Initializing LLM provider: ${providerName}`);
 
         switch (providerName) {
             case 'openai':
@@ -57,11 +57,11 @@ export class LLMService {
         }
 
         this.provider.initialize(config, this.logger);
-        this.logger.log(`LLM provider ${providerName} initialized successfully`);
+        // this.logger.log(`LLM provider ${providerName} initialized successfully`);
     }
 
     public async translate(content: any, targetLang: string): Promise<TranslationResult> {
-        this.logger.log(`Starting translation to ${targetLang}`);
+        // this.logger.log(`Starting translation to ${targetLang}`);
         try {
             // Initialize provider if not already initialized
             if (!this.provider) {
@@ -69,8 +69,8 @@ export class LLMService {
             }
             
             const result = await this.translateInBatches(content, targetLang);
-            this.logger.log(`Translation to ${targetLang} completed successfully`);
-            this.logger.log(`Total tokens used: Input: ${result.tokensUsed.inputTokens}, Output: ${result.tokensUsed.outputTokens}`);
+            // this.logger.log(`Translation to ${targetLang} completed successfully`);
+            // this.logger.log(`Total tokens used: Input: ${result.tokensUsed.inputTokens}, Output: ${result.tokensUsed.outputTokens}`);
             return result;
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
@@ -90,11 +90,11 @@ export class LLMService {
         let index = 0;
         for (const batch of batchGen) {
             index++;
-            this.outputChannel.appendLine(`Translating batch ${index}...`);
+            // this.outputChannel.appendLine(`Translating batch ${index}...`);
             const result = await this.provider.translate(batch, targetLang);
             if (result.tokensUsed.inputTokens + result.tokensUsed.outputTokens > this.batchTokenLimit) {
                 this.batchSize = Math.max(1, Math.floor(this.batchSize / 2));
-                this.outputChannel.appendLine(`Token usage high, reducing batch size to ${this.batchSize}`);
+                // this.outputChannel.appendLine(`Token usage high, reducing batch size to ${this.batchSize}`);
             }
             yield result;
         }
@@ -108,15 +108,15 @@ export class LLMService {
         const running: Promise<void>[] = [];
 
         const processBatch = async (batch: any, index: number) => {
-            this.outputChannel.appendLine(`Translating batch ${index}...`);
+            // this.outputChannel.appendLine(`Translating batch ${index}...`);
             const result = await this.provider.translate(batch, targetLang);
             Object.assign(totalTranslatedContent, result.translatedContent);
             totalTokensUsed.inputTokens += result.tokensUsed.inputTokens;
             totalTokensUsed.outputTokens += result.tokensUsed.outputTokens;
-            this.outputChannel.appendLine(`Batch ${index} translated. Tokens used: Input: ${result.tokensUsed.inputTokens}, Output: ${result.tokensUsed.outputTokens}`);
+            // this.outputChannel.appendLine(`Batch ${index} translated. Tokens used: Input: ${result.tokensUsed.inputTokens}, Output: ${result.tokensUsed.outputTokens}`);
             if (result.tokensUsed.inputTokens + result.tokensUsed.outputTokens > this.batchTokenLimit) {
                 this.batchSize = Math.max(1, Math.floor(this.batchSize / 2));
-                this.outputChannel.appendLine(`Token usage high, reducing batch size to ${this.batchSize}`);
+                // this.outputChannel.appendLine(`Token usage high, reducing batch size to ${this.batchSize}`);
             }
         };
 
@@ -151,7 +151,7 @@ export class LLMService {
     }
 
     public async validateTranslation(originalContent: any, translatedContent: any, targetLang: string): Promise<ValidationResult> {
-        this.logger.log(`Starting translation validation for ${targetLang}`);
+        // this.logger.log(`Starting translation validation for ${targetLang}`);
         try {
             // Initialize provider if not already initialized
             if (!this.provider) {
@@ -159,8 +159,8 @@ export class LLMService {
             }
             
             const result = await this.provider.validateTranslation(originalContent, translatedContent, targetLang);
-            this.logger.log(`Translation validation for ${targetLang} completed`);
-            this.logger.log(`Validation tokens used: Input: ${result.tokensUsed.inputTokens}, Output: ${result.tokensUsed.outputTokens}`);
+            // this.logger.log(`Translation validation for ${targetLang} completed`);
+            // this.logger.log(`Validation tokens used: Input: ${result.tokensUsed.inputTokens}, Output: ${result.tokensUsed.outputTokens}`);
             return result;
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);

@@ -57,6 +57,52 @@ export class StreamingTranslationManager {
         this.autoSaveInterval = config.get<number>('autoSaveInterval', 100);
     }
 
+    /**
+     * Structured logging for translation process - focuses on the three key structures
+     */
+    private logTranslationStructures(chunkId: string, inputToLLM: any, llmResponse: any, finalStructure: any): void {
+        const separator = '='.repeat(80);
+        const sectionSeparator = '-'.repeat(60);
+        
+        this.logger.log(separator);
+        this.logger.log(`🔄 TRANSLATION STRUCTURES FOR ${chunkId.toUpperCase()}`);
+        this.logger.log(separator);
+        
+        // 1. Input to LLM
+        this.logger.log(`📤 INPUT TO LLM (${Object.keys(inputToLLM).length} keys):`);
+        this.logger.log(sectionSeparator);
+        this.logger.log(JSON.stringify(inputToLLM, null, 2));
+        this.logger.log('');
+        
+        // 2. LLM Response
+        this.logger.log(`📥 LLM RESPONSE (${Object.keys(llmResponse).length} keys):`);
+        this.logger.log(sectionSeparator);
+        this.logger.log(JSON.stringify(llmResponse, null, 2));
+        this.logger.log('');
+        
+        // 3. Final Extracted Structure (for diff file) - only if provided
+        if (finalStructure !== null) {
+            this.logger.log(`📋 FINAL EXTRACTED STRUCTURE (${Object.keys(finalStructure).length} keys):`);
+            this.logger.log(sectionSeparator);
+            this.logger.log(JSON.stringify(finalStructure, null, 2));
+            this.logger.log('');
+        }
+        
+        // Summary comparison
+        this.logger.log(`📊 STRUCTURE COMPARISON SUMMARY:`);
+        this.logger.log(sectionSeparator);
+        this.logger.log(`Input keys: ${Object.keys(inputToLLM).join(', ')}`);
+        this.logger.log(`Response keys: ${Object.keys(llmResponse).join(', ')}`);
+        if (finalStructure !== null) {
+            this.logger.log(`Final keys: ${Object.keys(finalStructure).join(', ')}`);
+        } else {
+            this.logger.log(`Final structure: Will be logged in applyChunkToFile`);
+        }
+        
+        this.logger.log(separator);
+        this.logger.log('');
+    }
+
     public async translateLargeFileStreaming(fileUri: vscode.Uri): Promise<void> {
         if (this.isTranslationActive) {
             vscode.window.showWarningMessage('Translation is already in progress. Please wait for it to complete.');
@@ -69,7 +115,7 @@ export class StreamingTranslationManager {
         try {
             const filePath = fileUri.fsPath;
             this.originalFilePath = filePath;
-            this.logger.log(`Starting streaming translation for file: ${filePath}`);
+            this.logger.log(`🚀 Starting streaming translation for file: ${filePath}`);
 
             // بررسی معتبر بودن فایل
             if (!this.isValidTranslationFile(filePath)) {
@@ -84,7 +130,7 @@ export class StreamingTranslationManager {
             const llmProvider = config.get<string>('llmProvider');
             const llmApiKey = config.get<string>('llmApiKey');
 
-            this.logger.log(`Configuration: basePath=${basePath}, baseLanguage=${baseLanguage}, llmProvider=${llmProvider}, hasApiKey=${!!llmApiKey}`);
+            // this.logger.log(`Configuration: basePath=${basePath}, baseLanguage=${baseLanguage}, llmProvider=${llmProvider}, hasApiKey=${!!llmApiKey}`);
 
             if (!basePath || !baseLanguage) {
                 throw new Error('Base path or base language not configured.');
@@ -132,7 +178,7 @@ export class StreamingTranslationManager {
 
             // تقسیم به چانک‌ها
             const chunks = this.splitIntoChunks(toTranslate, this.chunkSize);
-            this.logger.log(`Split content into ${chunks.length} chunks from ${Object.keys(toTranslate).length} total keys`);
+            this.logger.log(`📦 Split content into ${chunks.length} chunks from ${Object.keys(toTranslate).length} total keys`);
 
             // ایجاد فایل موقت برای ترجمه
             this.tempFilePath = this.createTempFile(filePath, targetContent);
@@ -144,7 +190,7 @@ export class StreamingTranslationManager {
             let acceptedChunks = 0;
             let rejectedChunks = 0;
 
-            this.logger.log(`Starting translation loop for ${chunks.length} chunks`);
+            this.logger.log(`🚀 Starting translation loop for ${chunks.length} chunks`);
 
             // نمایش progress bar به صورت async
             this.showProgressBar(chunks.length).catch(error => {
@@ -153,36 +199,36 @@ export class StreamingTranslationManager {
 
             for (let i = 0; i < chunks.length; i++) {
                 if (this.translationCancelled) {
-                    this.logger.log('Translation cancelled by user');
+                    this.logger.log('❌ Translation cancelled by user');
                     break;
                 }
 
                 const chunk = chunks[i];
                 const chunkId = `chunk_${i + 1}`;
 
-                this.logger.log(`Processing chunk ${chunkId} (${i + 1}/${chunks.length})`);
+                this.logger.log(`🔄 Processing chunk ${chunkId} (${i + 1}/${chunks.length})`);
 
                 try {
                     // به‌روزرسانی progress
                     this.updateProgress(i + 1, chunks.length, chunkId, totalTokens, acceptedChunks, rejectedChunks);
 
                     // ترجمه چانک
-                    this.logger.log(`Translating chunk ${chunkId}...`);
+                    // this.logger.log(`Translating chunk ${chunkId}...`);
                     const result = await this.translateChunk(chunk, lang, chunkId, i + 1, chunks.length);
-                    this.logger.log(`Chunk ${chunkId} translated successfully`);
+                    // this.logger.log(`Chunk ${chunkId} translated successfully`);
                     
                     // اعمال مستقیم در فایل موقت
-                    this.logger.log(`Applying chunk ${chunkId} to temp file...`);
+                    // this.logger.log(`Applying chunk ${chunkId} to temp file...`);
                     const applied = await this.applyChunkToFile(result);
                     
                     if (applied) {
                         acceptedChunks++;
                         totalTokens.inputTokens += result.tokensUsed.inputTokens;
                         totalTokens.outputTokens += result.tokensUsed.outputTokens;
-                        this.logger.log(`Chunk ${chunkId} applied successfully`);
+                        this.logger.log(`✅ Chunk ${chunkId} applied successfully`);
                     } else {
                         rejectedChunks++;
-                        this.logger.log(`Chunk ${chunkId} rejected by user`);
+                        this.logger.log(`❌ Chunk ${chunkId} rejected by user`);
                     }
 
                     // ذخیره نتیجه
@@ -192,7 +238,7 @@ export class StreamingTranslationManager {
                     });
 
                     // کمی تاخیر برای نمایش بهتر
-                    this.logger.log(`Waiting ${this.autoSaveInterval}ms before next chunk...`);
+                    // this.logger.log(`Waiting ${this.autoSaveInterval}ms before next chunk...`);
                     await this.delay(this.autoSaveInterval);
 
                 } catch (error) {
@@ -201,25 +247,25 @@ export class StreamingTranslationManager {
                 }
             }
 
-            this.logger.log(`Translation loop completed. Processed ${results.length} chunks.`);
+            // this.logger.log(`Translation loop completed. Processed ${results.length} chunks.`);
 
             if (!this.translationCancelled && results.length > 0) {
-                this.logger.log(`Translation loop completed. Processed ${results.length} chunks, ${acceptedChunks} accepted, ${rejectedChunks} rejected.`);
+                this.logger.log(`🎉 Translation loop completed. Processed ${results.length} chunks, ${acceptedChunks} accepted, ${rejectedChunks} rejected.`);
                 
                 if (acceptedChunks > 0) {
-                    this.logger.log('Translation completed successfully, showing final summary...');
+                    this.logger.log('✅ Translation completed successfully, showing final summary...');
                     
                     // نمایش خلاصه نهایی
                     await this.showFinalSummary(results, totalTokens, acceptedChunks, rejectedChunks);
                     
-                    this.logger.log('Translation completed - use Accept All or Reject All buttons in status bar');
+                    this.logger.log('🎯 Translation completed - use Accept All or Reject All buttons in status bar');
                     
                     // نمایش پیام نهایی بدون popup
                     vscode.window.showInformationMessage(
                         `Translation completed! ${acceptedChunks} chunks processed successfully, ${rejectedChunks} failed. Use Accept All or Reject All buttons in status bar.`
                     );
                 } else {
-                    this.logger.log('No chunks were successfully translated');
+                    this.logger.log('❌ No chunks were successfully translated');
                     vscode.window.showWarningMessage(
                         `Translation failed! All ${results.length} chunks failed to translate. Please check the logs for details.`
                     );
@@ -228,11 +274,11 @@ export class StreamingTranslationManager {
                 
                 // cleanup فقط وقتی کاربر تصمیم نهایی گرفت (با دکمه‌های Accept All/Reject All)
             } else if (this.translationCancelled) {
-                this.logger.log('Translation was cancelled by user');
+                this.logger.log('❌ Translation was cancelled by user');
                 vscode.window.showInformationMessage('Translation was cancelled by user.');
                 this.cleanup(); // cleanup در صورت cancel
             } else {
-                this.logger.log('No results to process');
+                this.logger.log('❌ No results to process');
                 this.cleanup(); // cleanup در صورت عدم وجود نتیجه
             }
 
@@ -240,7 +286,7 @@ export class StreamingTranslationManager {
             this.logger.error(`Error during streaming translation: ${error}`);
             vscode.window.showErrorMessage(`Translation failed: ${error}`);
         } finally {
-            this.logger.log('Setting isTranslationActive to false');
+            // this.logger.log('Setting isTranslationActive to false');
             this.isTranslationActive = false;
             this.hideProgressBar();
             // hideStatusBar() را حذف کردیم تا دکمه‌های Accept All/Reject All باقی بمانند
@@ -332,14 +378,14 @@ export class StreamingTranslationManager {
             // نوشتن به فایل موقت کامل
             fs.writeFileSync(this.tempFilePath, JSON.stringify(mergedContent, null, 2));
 
-            this.logger.log(`Successfully wrote chunk ${result.chunkId} to temp file`);
+            // this.logger.log(`Successfully wrote chunk ${result.chunkId} to temp file`);
 
             // نمایش diff view تجمعی
-            this.logger.log(`About to show diff view for chunk ${result.chunkId}...`);
+            // this.logger.log(`About to show diff view for chunk ${result.chunkId}...`);
             this.showDiffViewWithControls(mergedContent, result.chunkId).catch(error => {
                 this.logger.error(`Error showing diff view for chunk ${result.chunkId}: ${error}`);
             });
-            this.logger.log(`Diff view initiated for chunk ${result.chunkId}`);
+            // this.logger.log(`Diff view initiated for chunk ${result.chunkId}`);
 
             return true;
         } catch (error) {
@@ -350,47 +396,47 @@ export class StreamingTranslationManager {
 
     private async showLiveDiff(mergedContent: any): Promise<void> {
         try {
-            this.logger.log('Starting showLiveDiff...');
+            // this.logger.log('Starting showLiveDiff...');
             
             if (!this.originalFilePath) {
                 this.logger.error('Original file path not found for live diff');
                 return;
             }
 
-            this.logger.log(`Original file path: ${this.originalFilePath}`);
+            // this.logger.log(`Original file path: ${this.originalFilePath}`);
 
             // خواندن فایل اصلی
             let originalContent: any = {};
             if (fs.existsSync(this.originalFilePath)) {
                 originalContent = this.loadJsonFile(this.originalFilePath);
-                this.logger.log(`Original content loaded with ${Object.keys(originalContent).length} keys`);
+                // this.logger.log(`Original content loaded with ${Object.keys(originalContent).length} keys`);
             } else {
-                this.logger.log('Original file does not exist, using empty content');
+                // this.logger.log('Original file does not exist, using empty content');
             }
 
-            this.logger.log(`Merged content has ${Object.keys(mergedContent).length} keys`);
+            // this.logger.log(`Merged content has ${Object.keys(mergedContent).length} keys`);
 
             // باز کردن فایل اصلی در editor اگر باز نیست
             let editor = vscode.window.activeTextEditor;
             if (!editor || editor.document.uri.fsPath !== this.originalFilePath) {
-                this.logger.log('Opening original file in editor...');
+                // this.logger.log('Opening original file in editor...');
                 const document = await vscode.workspace.openTextDocument(this.originalFilePath);
                 editor = await vscode.window.showTextDocument(document);
-                this.logger.log('Original file opened in editor');
+                // this.logger.log('Original file opened in editor');
             }
 
             if (editor) {
-                this.logger.log('Active editor found, showing realtime diff...');
+                // this.logger.log('Active editor found, showing realtime diff...');
                 
                 // نمایش diff به صورت visual
                 await this.showLiveDiffAndUpdate(mergedContent, 'current');
                 
-                this.logger.log('Visual diff displayed');
+                // this.logger.log('Visual diff displayed');
             } else {
-                this.logger.log('No active editor found for live diff');
+                // this.logger.log('No active editor found for live diff');
             }
 
-            this.logger.log('Live diff process completed');
+            // this.logger.log('Live diff process completed');
         } catch (error) {
             this.logger.error(`Error showing live diff: ${error}`);
         }
@@ -741,20 +787,32 @@ Translation Summary:
         chunkNumber: number, 
         totalChunks: number
     ): Promise<StreamingTranslationResult> {
-        this.logger.log(`Translating chunk ${chunkId} (${chunkNumber}/${totalChunks})`);
-        this.logger.log(`Chunk ${chunkId} structure: ${Object.keys(chunk).length} keys`);
-        this.logger.log(`Chunk ${chunkId} sample keys: ${Object.keys(chunk).slice(0, 3).join(', ')}`);
-        this.logger.log(`Chunk ${chunkId} sample values: ${Object.values(chunk).slice(0, 2).map(v => typeof v === 'string' ? v.substring(0, 50) : typeof v)}`);
+        // this.logger.log(`Translating chunk ${chunkId} (${chunkNumber}/${totalChunks})`);
+        // this.logger.log(`Chunk ${chunkId} structure: ${Object.keys(chunk).length} keys`);
+        // this.logger.log(`Chunk ${chunkId} sample keys: ${Object.keys(chunk).slice(0, 3).join(', ')}`);
+        // this.logger.log(`Chunk ${chunkId} sample values: ${Object.values(chunk).slice(0, 2).map(v => typeof v === 'string' ? v.substring(0, 50) : typeof v)}`);
 
         const startLine = (chunkNumber - 1) * this.chunkSize;
         const endLine = startLine + Object.keys(chunk).length;
 
         try {
-            this.logger.log(`Calling LLM service for chunk ${chunkId}...`);
+            // this.logger.log(`Calling LLM service for chunk ${chunkId}...`);
             const result = await this.llmService.translate(chunk, lang);
-            this.logger.log(`LLM service returned result for chunk ${chunkId}`);
-            this.logger.log(`Chunk ${chunkId} translated structure: ${Object.keys(result.translatedContent).length} keys`);
-            this.logger.log(`Chunk ${chunkId} translated sample: ${Object.keys(result.translatedContent).slice(0, 2).join(', ')}`);
+            // this.logger.log(`LLM service returned result for chunk ${chunkId}`);
+            // this.logger.log(`Chunk ${chunkId} translated structure: ${Object.keys(result.translatedContent).length} keys`);
+            // this.logger.log(`Chunk ${chunkId} translated sample: ${Object.keys(result.translatedContent).slice(0, 2).join(', ')}`);
+
+            // بازسازی ساختار اصلی و حذف prefix های تکراری
+            const normalizedChunk = this.convertLLMResponseToOriginalStructureNew(
+                result.translatedContent,
+                chunk
+            );
+
+            // تبدیل نتیجه نهایی به ساختار flat
+            const flatTranslated = this.flattenNestedContent(normalizedChunk);
+
+            // Log the three key structures for comparison
+            this.logTranslationStructures(chunkId, chunk, result.translatedContent, flatTranslated);
 
             return {
                 chunkId,
@@ -776,7 +834,7 @@ Translation Summary:
         const chunks: any[] = [];
         const keys = Object.keys(obj);
         
-        this.logger.log(`Splitting ${keys.length} keys into character-based chunks (max ${chunkSize} chars per chunk)`);
+        // this.logger.log(`Splitting ${keys.length} keys into character-based chunks (max ${chunkSize} chars per chunk)`);
         
         let currentChunk: any = {};
         let currentChunkSize = 0;
@@ -791,7 +849,7 @@ Translation Summary:
             if (currentChunkSize + keyValueSize > maxChunkSize && Object.keys(currentChunk).length > 0) {
                 // ذخیره chunk فعلی
                 const chunkStr = JSON.stringify(currentChunk, null, 2);
-                this.logger.log(`Chunk ${chunks.length + 1} created: ${chunkStr.length} chars, ${Object.keys(currentChunk).length} keys`);
+                // this.logger.log(`Chunk ${chunks.length + 1} created: ${chunkStr.length} chars, ${Object.keys(currentChunk).length} keys`);
                 chunks.push({ ...currentChunk });
                 
                 // شروع chunk جدید
@@ -807,11 +865,11 @@ Translation Summary:
         // اضافه کردن آخرین chunk
         if (Object.keys(currentChunk).length > 0) {
             const chunkStr = JSON.stringify(currentChunk, null, 2);
-            this.logger.log(`Final chunk ${chunks.length + 1} created: ${chunkStr.length} chars, ${Object.keys(currentChunk).length} keys`);
+            // this.logger.log(`Final chunk ${chunks.length + 1} created: ${chunkStr.length} chars, ${Object.keys(currentChunk).length} keys`);
             chunks.push(currentChunk);
         }
         
-        this.logger.log(`Created ${chunks.length} chunks total`);
+        // this.logger.log(`Created ${chunks.length} chunks total`);
         return chunks;
     }
 
@@ -973,9 +1031,9 @@ Translation Summary:
      * تبدیل پاسخ LLM به ساختار اصلی - New improved version
      */
     private convertLLMResponseToOriginalStructureNew(llmResponse: any, originalChunk: any): any {
-        this.logger.log(`Converting LLM response to original structure (normalized)...`);
-        this.logger.log(`Original chunk keys: ${Object.keys(originalChunk).join(', ')}`);
-        this.logger.log(`LLM response keys: ${Object.keys(llmResponse).join(', ')}`);
+        // this.logger.log(`Converting LLM response to original structure (normalized)...`);
+        // this.logger.log(`Original chunk keys: ${Object.keys(originalChunk).join(', ')}`);
+        // this.logger.log(`LLM response keys: ${Object.keys(llmResponse).join(', ')}`);
     
         const result: any = {};
     
@@ -1005,7 +1063,7 @@ Translation Summary:
             }
         }
     
-        this.logger.log(`✅ Final normalized keys: ${Object.keys(result).join(', ')}`);
+        // this.logger.log(`✅ Final normalized keys: ${Object.keys(result).join(', ')}`);
         return result;
     }
 
