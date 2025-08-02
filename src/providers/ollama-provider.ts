@@ -161,7 +161,7 @@ ${JSON.stringify(translatedContent, null, 2)}`;
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    timeout: 120000 // 2 minutes timeout for local models
+                    timeout: 300000 // 5 minutes timeout for local models to handle larger chunks
                 }
             );
     

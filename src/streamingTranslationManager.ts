@@ -52,7 +52,7 @@ export class StreamingTranslationManager {
     this.diffViewer = ChunkDiffViewer.getInstance();
 
     const config = vscode.workspace.getConfiguration('i18nNexus');
-    this.chunkSize = config.get<number>('chunkSize', 3000);
+    this.chunkSize = config.get<number>('chunkSize', 15000); // Increased from 3000 to 15000 for better efficiency
     this.autoSaveInterval = config.get<number>('autoSaveInterval', 100);
   }
 
@@ -512,6 +512,56 @@ Translation Summary:
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
+  /**
+   * Optimizes chunking strategy based on content characteristics and LLM provider
+   * This helps reduce the number of API calls for large files while considering provider limitations
+   */
+  private optimizeChunkingStrategy(obj: Record<string, any>): { chunkSize: number; maxKeysPerChunk: number } {
+    const keys = Object.keys(obj);
+    const totalKeys = keys.length;
+    const totalSize = JSON.stringify(obj, null, 2).length;
+    
+    // Get current LLM provider to adjust strategy
+    const config = vscode.workspace.getConfiguration('i18nNexus');
+    const llmProvider = config.get<string>('llmProvider', 'openai');
+    
+    // Ollama needs smaller chunks due to local processing limitations
+    if (llmProvider === 'ollama') {
+      // For very large files with Ollama, use conservative chunking
+      if (totalKeys > 1000) {
+        return { chunkSize: 8000, maxKeysPerChunk: 50 };
+      }
+      
+      // For medium files with Ollama
+      if (totalKeys > 500) {
+        return { chunkSize: 6000, maxKeysPerChunk: 40 };
+      }
+      
+      // For smaller files with Ollama
+      if (totalKeys > 100) {
+        return { chunkSize: 5000, maxKeysPerChunk: 30 };
+      }
+      
+      // For very small files with Ollama
+      return { chunkSize: 4000, maxKeysPerChunk: 20 };
+    }
+    
+    // For other providers (OpenAI, Claude, etc.), use more aggressive chunking
+    if (totalKeys > 1000) {
+      return { chunkSize: 25000, maxKeysPerChunk: 200 };
+    }
+    
+    if (totalKeys > 500) {
+      return { chunkSize: 20000, maxKeysPerChunk: 150 };
+    }
+    
+    if (totalKeys > 100) {
+      return { chunkSize: 15000, maxKeysPerChunk: 100 };
+    }
+    
+    return { chunkSize: 10000, maxKeysPerChunk: 50 };
+  }
+
   private async translateChunk(
     chunk: Record<string, any>,
     lang: string,
@@ -542,23 +592,76 @@ Translation Summary:
   private splitIntoChunks(obj: Record<string, any>, chunkSize: number): Record<string, any>[] {
     const chunks: Record<string, any>[] = [];
     const keys = Object.keys(obj);
+    
+    // If we have very few keys, just return one chunk
+    if (keys.length <= 10) {
+      return [obj];
+    }
+    
+    // Get optimized chunking strategy based on content size and provider
+    const strategy = this.optimizeChunkingStrategy(obj);
+    const optimalChunkSize = Math.max(chunkSize, strategy.chunkSize);
+    const maxKeysPerChunk = strategy.maxKeysPerChunk;
+    
+    // Get current LLM provider for additional optimizations
+    const config = vscode.workspace.getConfiguration('i18nNexus');
+    const llmProvider = config.get<string>('llmProvider', 'openai');
+    const isOllama = llmProvider === 'ollama';
+    
+    // Calculate total content size for logging
+    const totalContentSize = JSON.stringify(obj, null, 2).length;
+    
     let currentChunk: Record<string, any> = {};
     let currentSize = 0;
-    for (const key of keys) {
-      const kv = { [key]: obj[key] };
-      const s = JSON.stringify(kv, null, 2).length;
-      if (currentSize + s > chunkSize && Object.keys(currentChunk).length) {
+    let keysInCurrentChunk = 0;
+    
+    // For Ollama, use simpler sorting to avoid complex processing
+    const sortedKeys = isOllama ? keys : keys.sort((a, b) => {
+      const aSize = JSON.stringify(obj[a]).length;
+      const bSize = JSON.stringify(obj[b]).length;
+      return bSize - aSize; // Sort by descending size to put larger values first
+    });
+    
+    for (const key of sortedKeys) {
+      const value = obj[key];
+      const keyValuePair = { [key]: value };
+      const pairSize = JSON.stringify(keyValuePair, null, 2).length;
+      
+      // For Ollama, be more conservative with chunk sizes
+      const sizeThreshold = isOllama ? optimalChunkSize * 0.7 : optimalChunkSize;
+      const keyThreshold = isOllama ? Math.min(maxKeysPerChunk, 25) : maxKeysPerChunk;
+      
+      // Start a new chunk if:
+      // 1. Current chunk is getting too large, OR
+      // 2. We have too many keys in current chunk, OR
+      // 3. Current chunk is already substantial and adding this would make it too large
+      const shouldStartNewChunk = (currentSize + pairSize > sizeThreshold && keysInCurrentChunk > 0) || 
+                                  keysInCurrentChunk >= keyThreshold ||
+                                  (isOllama && currentSize > sizeThreshold * 0.6 && pairSize > sizeThreshold * 0.3);
+      
+      if (shouldStartNewChunk) {
         chunks.push(currentChunk);
-        currentChunk = { [key]: obj[key] };
-        currentSize = s;
+        currentChunk = { [key]: value };
+        currentSize = pairSize;
+        keysInCurrentChunk = 1;
       } else {
-        currentChunk[key] = obj[key];
-        currentSize += s;
+        currentChunk[key] = value;
+        currentSize += pairSize;
+        keysInCurrentChunk++;
       }
     }
-    if (Object.keys(currentChunk).length) {
+    
+    // Add the last chunk if it has content
+    if (Object.keys(currentChunk).length > 0) {
       chunks.push(currentChunk);
     }
+    
+    // Log chunking statistics for debugging
+    const avgKeysPerChunk = Math.round(keys.length / chunks.length);
+    const avgSizePerChunk = Math.round(totalContentSize / chunks.length);
+    const providerInfo = isOllama ? ' (Ollama optimized)' : '';
+    this.logger.log(`Chunking optimization: ${keys.length} keys split into ${chunks.length} chunks (avg ${avgKeysPerChunk} keys, ${avgSizePerChunk} chars per chunk, max ${maxKeysPerChunk} keys per chunk)${providerInfo}`);
+    
     return chunks;
   }
 
