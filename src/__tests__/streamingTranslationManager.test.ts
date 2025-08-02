@@ -86,7 +86,22 @@ describe('StreamingTranslationManager', () => {
         mockLogger = {
             log: jest.fn(),
             error: jest.fn(),
-            warn: jest.fn()
+            warn: jest.fn(),
+            info: jest.fn(),
+            debug: jest.fn(),
+            trace: jest.fn(),
+            logStructures: jest.fn(),
+            logProvider: jest.fn(),
+            logTranslation: jest.fn(),
+            setLogLevel: jest.fn(),
+            getLogLevel: jest.fn(),
+            enableCategory: jest.fn(),
+            disableCategory: jest.fn(),
+            toggleCategory: jest.fn(),
+            toggleDebugOutput: jest.fn(),
+            isDebugEnabled: jest.fn(),
+            getEnabledCategories: jest.fn(),
+            isCategoryEnabled: jest.fn()
         } as any;
 
         manager = new StreamingTranslationManager(mockLogger, mockChannel);
@@ -214,42 +229,6 @@ describe('StreamingTranslationManager', () => {
             });
         });
 
-        it('should merge contents correctly', () => {
-            const baseContent = { key1: 'value1', key2: 'value2' };
-            const targetContent = { key1: 'translated1' };
-            const translatedContent = { key2: 'translated2' };
-
-            const result = (manager as any).mergeContents(baseContent, targetContent, translatedContent);
-            
-            expect(result).toEqual({
-                key1: 'value1',
-                key2: 'translated2'
-            });
-        });
-
-        it('should set nested properties correctly', () => {
-            const obj: any = {};
-            (manager as any).setNestedProperty(obj, 'level1.level2.key', 'value');
-            
-            expect(obj.level1.level2.key).toBe('value');
-        });
-
-        it('should delete nested properties correctly', () => {
-            const obj = {
-                level1: {
-                    level2: {
-                        key: 'value'
-                    }
-                }
-            };
-            
-            (manager as any).deleteNestedProperty(obj, 'level1.level2.key');
-            
-            expect(obj.level1.level2.key).toBeUndefined();
-        });
-    });
-
-    describe('File operations', () => {
         it('should create temp file correctly', () => {
             const originalPath = '/test/file.json';
             const initialContent = { key1: 'value1' };

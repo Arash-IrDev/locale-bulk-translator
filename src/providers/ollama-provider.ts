@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import axios from 'axios';
 import { ILLMProvider, TranslationResult, ValidationResult, TokenUsage } from '../llm-provider.interface';
-import { Logger } from '../logger';
+import { Logger, LogCategory } from '../logger';
 import { getProviderDefaultApiUrl, getProviderDefaultModel } from '../provider-config';
 
 export class OllamaProvider implements ILLMProvider {
@@ -14,69 +14,69 @@ export class OllamaProvider implements ILLMProvider {
         this.apiUrl = getProviderDefaultApiUrl('ollama') + '/chat/completions';
         this.model = config.get('llmModel') || getProviderDefaultModel('ollama');
         this.logger = logger;
-        this.logger.log('OllamaProvider initialized');
-        this.logger.log(`Ollama API URL: ${this.apiUrl}`);
-        this.logger.log(`Ollama Model: ${this.model}`);
+        this.logger.info('OllamaProvider initialized', LogCategory.PROVIDER);
+        this.logger.debug(`Ollama API URL: ${this.apiUrl}`, LogCategory.PROVIDER);
+        this.logger.debug(`Ollama Model: ${this.model}`, LogCategory.PROVIDER);
     }
 
     async translate(content: any, targetLang: string): Promise<TranslationResult> {
-        this.logger.log(`Ollama: Starting translation to ${targetLang}`);
-        this.logger.log(`Ollama: Input content structure: ${Object.keys(content).length} keys`);
-        this.logger.log(`Ollama: Input content keys: ${Object.keys(content).slice(0, 5).join(', ')}${Object.keys(content).length > 5 ? '...' : ''}`);
+        this.logger.logTranslation(`Starting translation to ${targetLang}`);
+        this.logger.logProvider(`Input content structure: ${Object.keys(content).length} keys`);
+        this.logger.logProvider(`Input content keys: ${Object.keys(content).slice(0, 5).join(', ')}${Object.keys(content).length > 5 ? '...' : ''}`);
         
         const prompt = this.generatePrompt(content, targetLang);
         
         try {
             const result = await this.callAPI(prompt);
-            this.logger.log(`Ollama: Raw response length: ${result.content.length} characters`);
-            this.logger.log(`Ollama: Raw response preview: ${result.content.substring(0, 200)}...`);
+            this.logger.logProvider(`Raw response length: ${result.content.length} characters`);
+            this.logger.logProvider(`Raw response preview: ${result.content.substring(0, 200)}...`);
             
             const parsedResponse = this.parseResponse(result.content);
-            this.logger.log(`Ollama: Parsed response structure: ${Object.keys(parsedResponse).length} keys`);
-            this.logger.log(`Ollama: Translation to ${targetLang} completed successfully`);
+            this.logger.logProvider(`Parsed response structure: ${Object.keys(parsedResponse).length} keys`);
+            this.logger.logTranslation(`Translation to ${targetLang} completed successfully`);
             
             return {
                 translatedContent: parsedResponse,
                 tokensUsed: result.tokensUsed
             };
         } catch (error) {
-            this.logger.error('Ollama: Translation failed', error);
+            this.logger.error('Translation failed', error, LogCategory.PROVIDER);
             throw error;
         }
     }
 
     async compareAndUpdate(oldContent: any, newContent: any, targetLang: string): Promise<TranslationResult> {
-        this.logger.log(`Ollama: Starting compare and update for ${targetLang}`);
+        this.logger.logTranslation(`Starting compare and update for ${targetLang}`);
         const prompt = this.generateCompareAndUpdatePrompt(oldContent, newContent, targetLang);
         
         try {
             const result = await this.callAPI(prompt);
             const parsedResponse = this.parseResponse(result.content);
-            this.logger.log(`Ollama: Compare and update for ${targetLang} completed`);
+            this.logger.logTranslation(`Compare and update for ${targetLang} completed`);
             return {
                 translatedContent: parsedResponse,
                 tokensUsed: result.tokensUsed
             };
         } catch (error) {
-            this.logger.error('Ollama: Compare and update failed', error);
+            this.logger.error('Compare and update failed', error, LogCategory.PROVIDER);
             throw error;
         }
     }
 
     async validateTranslation(originalContent: any, translatedContent: any, targetLang: string): Promise<ValidationResult> {
-        this.logger.log(`Ollama: Starting translation validation for ${targetLang}`);
+        this.logger.logTranslation(`Starting translation validation for ${targetLang}`);
         const prompt = this.generateValidationPrompt(originalContent, translatedContent, targetLang);
         
         try {
             const result = await this.callAPI(prompt);
             const isValid = this.parseValidationResponse(result.content);
-            this.logger.log(`Ollama: Translation validation for ${targetLang} completed`);
+            this.logger.logTranslation(`Translation validation for ${targetLang} completed`);
             return {
                 isValid,
                 tokensUsed: result.tokensUsed
             };
         } catch (error) {
-            this.logger.error('Ollama: Translation validation failed', error);
+            this.logger.error('Translation validation failed', error, LogCategory.PROVIDER);
             throw error;
         }
     }

@@ -51,6 +51,18 @@
           "title": "i18n Nexus: Toggle Debug Output"
         },
         {
+          "command": "i18n-nexus.setLogLevel",
+          "title": "i18n Nexus: Set Log Level"
+        },
+        {
+          "command": "i18n-nexus.toggleProviderLogs",
+          "title": "i18n Nexus: Toggle Provider Logs"
+        },
+        {
+          "command": "i18n-nexus.toggleStructureLogs",
+          "title": "i18n Nexus: Toggle Structure Logs"
+        },
+        {
           "command": "i18n-nexus.streamingTranslation",
           "title": "i18n Nexus: Translate File"
         },
@@ -59,6 +71,34 @@
           "title": "i18n Nexus: Cancel Translation"
         }
       ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "i18n-nexus.showConfig"
+        },
+        {
+          "command": "i18n-nexus.openSettings"
+        },
+        {
+          "command": "i18n-nexus.toggleDebugOutput"
+        },
+        {
+          "command": "i18n-nexus.setLogLevel"
+        },
+        {
+          "command": "i18n-nexus.toggleProviderLogs"
+        },
+        {
+          "command": "i18n-nexus.toggleStructureLogs"
+        },
+        {
+          "command": "i18n-nexus.streamingTranslation"
+        },
+        {
+          "command": "i18n-nexus.cancelTranslation"
+        }
+      ]
+    },
     "keybindings": [
       {
         "command": "i18n-nexus.toggleDebugOutput",

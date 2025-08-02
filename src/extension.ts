@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 import { StreamingTranslationManager } from './streamingTranslationManager';
 import { LanguageSelector } from './languageSelector';
 import { ModelConfigurator } from './modelConfigurator';
-import { Logger } from './logger';
+import { Logger, LogLevel, LogCategory } from './logger';
 // This method is called when the extension is activated for the first time
 export function activate(context: vscode.ExtensionContext) {
     const channel = vscode.window.createOutputChannel('i18n Nexus');
@@ -77,9 +77,38 @@ export function activate(context: vscode.ExtensionContext) {
     });
     logger.log('Toggle debug output command registered');
 
+    // Add new logging commands
+    let setLogLevelDisposable = vscode.commands.registerCommand('i18n-nexus.setLogLevel', async () => {
+        const levels = ['ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE'];
+        const selected = await vscode.window.showQuickPick(levels, {
+            placeHolder: 'Select log level'
+        });
+        
+        if (selected) {
+            const level = LogLevel[selected as keyof typeof LogLevel];
+            logger.setLogLevel(level);
+            vscode.window.showInformationMessage(`Log level set to: ${selected}`);
+        }
+    });
+
+    let toggleProviderLogsDisposable = vscode.commands.registerCommand('i18n-nexus.toggleProviderLogs', () => {
+        logger.toggleCategory(LogCategory.PROVIDER);
+        const status = logger.isCategoryEnabled(LogCategory.PROVIDER) ? 'enabled' : 'disabled';
+        vscode.window.showInformationMessage(`Provider logs ${status}`);
+    });
+
+    let toggleStructureLogsDisposable = vscode.commands.registerCommand('i18n-nexus.toggleStructureLogs', () => {
+        logger.toggleCategory(LogCategory.STRUCTURES);
+        const status = logger.isCategoryEnabled(LogCategory.STRUCTURES) ? 'enabled' : 'disabled';
+        vscode.window.showInformationMessage(`Structure logs ${status}`);
+    });
+
     context.subscriptions.push(
         configureModelDisposable,
-        toggleDebugOutputDisposable
+        toggleDebugOutputDisposable,
+        setLogLevelDisposable,
+        toggleProviderLogsDisposable,
+        toggleStructureLogsDisposable
     );
 
     // Register streaming translation command

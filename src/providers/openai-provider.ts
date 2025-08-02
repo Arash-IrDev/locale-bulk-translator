@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import OpenAI from 'openai';
 import { ILLMProvider, TranslationResult, ValidationResult, TokenUsage } from '../llm-provider.interface';
-import { Logger } from '../logger';
+import { Logger, LogCategory } from '../logger';
 import { getProviderDefaultApiUrl, getProviderDefaultModel } from '../provider-config';
 
 export class OpenAIProvider implements ILLMProvider {
@@ -25,61 +25,61 @@ export class OpenAIProvider implements ILLMProvider {
         // Use the configured API URL or default
         if (typeof apiUrl === 'string' && apiUrl.trim() !== '') {
             this.client.baseURL = apiUrl;
-            this.logger.log(`Using API URL: ${apiUrl}`);
+            this.logger.debug(`Using API URL: ${apiUrl}`, LogCategory.PROVIDER);
         } else {
-            this.logger.log('Using default OpenAI API URL');
+            this.logger.debug('Using default OpenAI API URL', LogCategory.PROVIDER);
         }
         
-        this.logger.log('OpenAIProvider initialized');
+        this.logger.info('OpenAIProvider initialized', LogCategory.PROVIDER);
     }
 
     async translate(content: any, targetLang: string): Promise<TranslationResult> {
-        this.logger.log(`OpenAI: Starting translation to ${targetLang}`);
+        this.logger.logTranslation(`Starting translation to ${targetLang}`);
         const prompt = this.generatePrompt(content, targetLang);
         
         try {
             const result = await this.callAPI(prompt);
             const parsedResponse = this.parseResponse(result.content);
-            this.logger.log(`OpenAI: Translation to ${targetLang} completed`);
+            this.logger.logTranslation(`Translation to ${targetLang} completed`);
             return {
                 translatedContent: parsedResponse,
                 tokensUsed: result.tokensUsed
             };
         } catch (error) {
-            this.logger.error('OpenAI: Translation failed', error);
+            this.logger.error('Translation failed', error, LogCategory.PROVIDER);
             throw error;
         }
     }
 
     async compareAndUpdate(oldContent: any, newContent: any, targetLang: string): Promise<any> {
-        this.logger.log(`OpenAI: Starting compare and update for ${targetLang}`);
+        this.logger.logTranslation(`Starting compare and update for ${targetLang}`);
         const prompt = this.generateCompareAndUpdatePrompt(oldContent, newContent, targetLang);
         
         try {
             const response = await this.callAPI(prompt);
             const parsedResponse = this.parseResponse(response.content);
-            this.logger.log(`OpenAI: Compare and update for ${targetLang} completed`);
+            this.logger.logTranslation(`Compare and update for ${targetLang} completed`);
             return parsedResponse;
         } catch (error) {
-            this.logger.error('OpenAI: Compare and update failed', error);
+            this.logger.error('Compare and update failed', error, LogCategory.PROVIDER);
             throw error;
         }
     }
 
     async validateTranslation(originalContent: any, translatedContent: any, targetLang: string): Promise<ValidationResult> {
-        this.logger.log(`OpenAI: Starting translation validation for ${targetLang}`);
+        this.logger.logTranslation(`Starting translation validation for ${targetLang}`);
         const prompt = this.generateValidationPrompt(originalContent, translatedContent, targetLang);
         
         try {
             const result = await this.callAPI(prompt);
             const isValid = this.parseValidationResponse(result.content);
-            this.logger.log(`OpenAI: Translation validation for ${targetLang} completed`);
+            this.logger.logTranslation(`Translation validation for ${targetLang} completed`);
             return {
                 isValid,
                 tokensUsed: result.tokensUsed
             };
         } catch (error) {
-            this.logger.error('OpenAI: Translation validation failed', error);
+            this.logger.error('Translation validation failed', error, LogCategory.PROVIDER);
             throw error;
         }
     }

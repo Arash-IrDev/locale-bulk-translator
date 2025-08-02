@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { LLMService } from './llmService';
-import { Logger } from './logger';
+import { Logger, LogCategory } from './logger';
 import { ChunkDiffViewer, ChunkDiffResult } from './chunkDiffViewer';
 import { getProviderConfig } from './provider-config';
 
@@ -58,43 +58,50 @@ export class StreamingTranslationManager {
     }
 
     /**
-     * Structured logging for translation process - focuses on the three key structures
+     * Structured logging for translation process - focuses on the four key structures
      */
-    private logTranslationStructures(chunkId: string, inputToLLM: any, llmResponse: any, finalStructure: any): void {
+    private logTranslationStructures(chunkId: string, originalData: any, inputToLLM: any, llmResponse: any, finalStructure: any): void {
         const separator = '='.repeat(80);
         const sectionSeparator = '-'.repeat(60);
         
-        this.logger.log(separator);
-        this.logger.log(`🔄 TRANSLATION STRUCTURES FOR ${chunkId.toUpperCase()}`);
-        this.logger.log(separator);
+        this.logger.logStructures(separator);
+        this.logger.logStructures(`🔄 TRANSLATION STRUCTURES FOR ${chunkId.toUpperCase()}`);
+        this.logger.logStructures(separator);
         
-        // 1. Input to LLM
-        this.logger.log(`📤 INPUT TO LLM (${Object.keys(inputToLLM).length} keys):`);
-        this.logger.log(sectionSeparator);
-        this.logger.log(JSON.stringify(inputToLLM, null, 2));
-        this.logger.log('');
+        // 1. Original Data Structure (from source file before any transformations)
+        this.logger.logStructures(`📄 ORIGINAL DATA STRUCTURE (${Object.keys(originalData).length} keys):`);
+        this.logger.logStructures(sectionSeparator);
+        this.logger.logStructures(JSON.stringify(originalData, null, 2));
+        this.logger.logStructures('');
         
-        // 2. LLM Response
-        this.logger.log(`📥 LLM RESPONSE (${Object.keys(llmResponse).length} keys):`);
-        this.logger.log(sectionSeparator);
-        this.logger.log(JSON.stringify(llmResponse, null, 2));
-        this.logger.log('');
+        // 2. Input to LLM
+        this.logger.logStructures(`📤 INPUT TO LLM (${Object.keys(inputToLLM).length} keys):`);
+        this.logger.logStructures(sectionSeparator);
+        this.logger.logStructures(JSON.stringify(inputToLLM, null, 2));
+        this.logger.logStructures('');
         
-        // 3. Final Extracted Structure (for diff file) - only if provided
-        this.logger.log(`📋 FINAL EXTRACTED STRUCTURE (${Object.keys(finalStructure).length} keys):`);
-        this.logger.log(sectionSeparator);
-        this.logger.log(JSON.stringify(finalStructure, null, 2));
-        this.logger.log('');
+        // 3. LLM Response
+        this.logger.logStructures(`📥 LLM RESPONSE (${Object.keys(llmResponse).length} keys):`);
+        this.logger.logStructures(sectionSeparator);
+        this.logger.logStructures(JSON.stringify(llmResponse, null, 2));
+        this.logger.logStructures('');
+        
+        // 4. Final Extracted Structure (for diff file) - only if provided
+        this.logger.logStructures(`📋 FINAL EXTRACTED STRUCTURE (${Object.keys(finalStructure).length} keys):`);
+        this.logger.logStructures(sectionSeparator);
+        this.logger.logStructures(JSON.stringify(finalStructure, null, 2));
+        this.logger.logStructures('');
         
         // Summary comparison
-        this.logger.log(`📊 STRUCTURE COMPARISON SUMMARY:`);
-        this.logger.log(sectionSeparator);
-        this.logger.log(`Input keys: ${Object.keys(inputToLLM).join(', ')}`);
-        this.logger.log(`Response keys: ${Object.keys(llmResponse).join(', ')}`);
-        this.logger.log(`Final keys: ${Object.keys(finalStructure).join(', ')}`);
+        this.logger.logStructures(`📊 STRUCTURE COMPARISON SUMMARY:`);
+        this.logger.logStructures(sectionSeparator);
+        this.logger.logStructures(`Original keys: ${Object.keys(originalData).join(', ')}`);
+        this.logger.logStructures(`Input keys: ${Object.keys(inputToLLM).join(', ')}`);
+        this.logger.logStructures(`Response keys: ${Object.keys(llmResponse).join(', ')}`);
+        this.logger.logStructures(`Final keys: ${Object.keys(finalStructure).join(', ')}`);
 
-        this.logger.log(separator);
-        this.logger.log('');
+        this.logger.logStructures(separator);
+        this.logger.logStructures('');
     }
 
     public async translateLargeFileStreaming(fileUri: vscode.Uri): Promise<void> {
@@ -109,7 +116,7 @@ export class StreamingTranslationManager {
         try {
             const filePath = fileUri.fsPath;
             this.originalFilePath = filePath;
-            this.logger.log(`🚀 Starting streaming translation for file: ${filePath}`);
+            this.logger.logTranslation(`Starting streaming translation for file: ${filePath}`);
 
             // Check if file is valid
             if (!this.isValidTranslationFile(filePath)) {
@@ -124,7 +131,7 @@ export class StreamingTranslationManager {
             const llmProvider = config.get<string>('llmProvider');
             const llmApiKey = config.get<string>('llmApiKey');
 
-            // this.logger.log(`Configuration: basePath=${basePath}, baseLanguage=${baseLanguage}, llmProvider=${llmProvider}, hasApiKey=${!!llmApiKey}`);
+            // this.logger.debug(`Configuration: basePath=${basePath}, baseLanguage=${baseLanguage}, llmProvider=${llmProvider}, hasApiKey=${!!llmApiKey}`, LogCategory.SYSTEM);
 
             if (!basePath || !baseLanguage) {
                 throw new Error('Base path or base language not configured.');
@@ -172,7 +179,7 @@ export class StreamingTranslationManager {
 
             // Split into chunks
             const chunks = this.splitIntoChunks(toTranslate, this.chunkSize);
-            this.logger.log(`📦 Split content into ${chunks.length} chunks from ${Object.keys(toTranslate).length} total keys`);
+            this.logger.logTranslation(`Split content into ${chunks.length} chunks from ${Object.keys(toTranslate).length} total keys`);
 
             // Create temporary file for translation
             this.tempFilePath = this.createTempFile(filePath, targetContent);
@@ -184,45 +191,45 @@ export class StreamingTranslationManager {
             let acceptedChunks = 0;
             let rejectedChunks = 0;
 
-            this.logger.log(`🚀 Starting translation loop for ${chunks.length} chunks`);
+            this.logger.logTranslation(`Starting translation loop for ${chunks.length} chunks`);
 
             // Show progress bar asynchronously
             this.showProgressBar(chunks.length).catch(error => {
-                this.logger.error(`Error in progress bar: ${error}`);
+                this.logger.error(`Error in progress bar: ${error}`, error, LogCategory.UI);
             });
 
             for (let i = 0; i < chunks.length; i++) {
                 if (this.translationCancelled) {
-                    this.logger.log('❌ Translation cancelled by user');
+                    this.logger.warn('Translation cancelled by user', LogCategory.TRANSLATION);
                     break;
                 }
 
                 const chunk = chunks[i];
                 const chunkId = `chunk_${i + 1}`;
 
-                this.logger.log(`🔄 Processing chunk ${chunkId} (${i + 1}/${chunks.length})`);
+                this.logger.logTranslation(`Processing chunk ${chunkId} (${i + 1}/${chunks.length})`);
 
                 try {
                     // Update progress
                     this.updateProgress(i + 1, chunks.length, chunkId, totalTokens, acceptedChunks, rejectedChunks);
 
                     // Translate chunk
-                    // this.logger.log(`Translating chunk ${chunkId}...`);
-                    const result = await this.translateChunk(chunk, lang, chunkId, i + 1, chunks.length);
-                    // this.logger.log(`Chunk ${chunkId} translated successfully`);
+                    // this.logger.debug(`Translating chunk ${chunkId}...`, LogCategory.TRANSLATION);
+                    const result = await this.translateChunk(chunk, toTranslate, lang, chunkId, i + 1, chunks.length);
+                    // this.logger.debug(`Chunk ${chunkId} translated successfully`, LogCategory.TRANSLATION);
                     
                     // Apply directly to temporary file
-                    // this.logger.log(`Applying chunk ${chunkId} to temp file...`);
+                    // this.logger.debug(`Applying chunk ${chunkId} to temp file...`, LogCategory.TRANSLATION);
                     const applied = await this.applyChunkToFile(result);
                     
                     if (applied) {
                         acceptedChunks++;
                         totalTokens.inputTokens += result.tokensUsed.inputTokens;
                         totalTokens.outputTokens += result.tokensUsed.outputTokens;
-                        this.logger.log(`✅ Chunk ${chunkId} applied successfully`);
+                        this.logger.logTranslation(`Chunk ${chunkId} applied successfully`);
                     } else {
                         rejectedChunks++;
-                        this.logger.log(`❌ Chunk ${chunkId} rejected by user`);
+                        this.logger.warn(`Chunk ${chunkId} rejected by user`, LogCategory.TRANSLATION);
                     }
 
                     // Save result
@@ -232,34 +239,34 @@ export class StreamingTranslationManager {
                     });
 
                     // Small delay for better display
-                    // this.logger.log(`Waiting ${this.autoSaveInterval}ms before next chunk...`);
+                    // this.logger.debug(`Waiting ${this.autoSaveInterval}ms before next chunk...`, LogCategory.TRANSLATION);
                     await this.delay(this.autoSaveInterval);
 
                 } catch (error) {
-                    this.logger.error(`Error translating chunk ${chunkId}: ${error}`);
+                    this.logger.error(`Error translating chunk ${chunkId}: ${error}`, error, LogCategory.TRANSLATION);
                     vscode.window.showWarningMessage(`Error translating chunk ${chunkId}. Skipping to next chunk.`);
                 }
             }
 
-            // this.logger.log(`Translation loop completed. Processed ${results.length} chunks.`);
+            // this.logger.debug(`Translation loop completed. Processed ${results.length} chunks.`, LogCategory.TRANSLATION);
 
             if (!this.translationCancelled && results.length > 0) {
-                this.logger.log(`🎉 Translation loop completed. Processed ${results.length} chunks, ${acceptedChunks} accepted, ${rejectedChunks} rejected.`);
+                this.logger.logTranslation(`Translation loop completed. Processed ${results.length} chunks, ${acceptedChunks} accepted, ${rejectedChunks} rejected.`);
                 
                 if (acceptedChunks > 0) {
-                    this.logger.log('✅ Translation completed successfully, showing final summary...');
+                    this.logger.logTranslation('Translation completed successfully, showing final summary...');
                     
                     // Show final summary
                     await this.showFinalSummary(results, totalTokens, acceptedChunks, rejectedChunks);
                     
-                    this.logger.log('🎯 Translation completed - use Accept All or Reject All buttons in status bar');
+                    this.logger.logTranslation('Translation completed - use Accept All or Reject All buttons in status bar');
                     
                     // Show final message without popup
                     vscode.window.showInformationMessage(
                         `Translation completed! ${acceptedChunks} chunks processed successfully, ${rejectedChunks} failed. Use Accept All or Reject All buttons in status bar.`
                     );
                 } else {
-                    this.logger.log('❌ No chunks were successfully translated');
+                    this.logger.error('No chunks were successfully translated', undefined, LogCategory.TRANSLATION);
                     vscode.window.showWarningMessage(
                         `Translation failed! All ${results.length} chunks failed to translate. Please check the logs for details.`
                     );
@@ -268,19 +275,19 @@ export class StreamingTranslationManager {
                 
                 // cleanup only when user makes final decision (with Accept All/Reject All buttons)
             } else if (this.translationCancelled) {
-                this.logger.log('❌ Translation was cancelled by user');
+                this.logger.warn('Translation was cancelled by user', LogCategory.TRANSLATION);
                 vscode.window.showInformationMessage('Translation was cancelled by user.');
                 this.cleanup(); // cleanup in case of cancel
             } else {
-                this.logger.log('❌ No results to process');
+                this.logger.warn('No results to process', LogCategory.TRANSLATION);
                 this.cleanup(); // cleanup in case of no results
             }
 
         } catch (error) {
-            this.logger.error(`Error during streaming translation: ${error}`);
+            this.logger.error(`Error during streaming translation: ${error}`, error, LogCategory.TRANSLATION);
             vscode.window.showErrorMessage(`Translation failed: ${error}`);
         } finally {
-            // this.logger.log('Setting isTranslationActive to false');
+            // this.logger.debug('Setting isTranslationActive to false', LogCategory.SYSTEM);
             this.isTranslationActive = false;
             this.hideProgressBar();
             // hideStatusBar() was removed to keep Accept All/Reject All buttons
@@ -776,6 +783,7 @@ Translation Summary:
     // Helper methods from previous class
     private async translateChunk(
         chunk: any, 
+        originalData: any,
         lang: string, 
         chunkId: string, 
         chunkNumber: number, 
@@ -805,8 +813,8 @@ Translation Summary:
             // Convert final result to flat structure
             const flatTranslated = this.flattenNestedContent(normalizedChunk);
 
-            // Log the three key structures for comparison
-            this.logTranslationStructures(chunkId, chunk, result.translatedContent, normalizedChunk);
+            // Log the four key structures for comparison
+            this.logTranslationStructures(chunkId, originalData, chunk, result.translatedContent, normalizedChunk);
 
             return {
                 chunkId,

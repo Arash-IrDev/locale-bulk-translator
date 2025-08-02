@@ -1,76 +1,172 @@
 # راهنمای لاگ‌های بهبود یافته
 
+## سیستم لاگینگ جدید
+
+### 🎛️ سطوح لاگینگ (Log Levels)
+
+سیستم جدید شامل 5 سطح لاگینگ است:
+
+1. **ERROR** (❌): خطاهای بحرانی - همیشه نمایش داده می‌شود
+2. **WARN** (⚠️): هشدارها - همیشه نمایش داده می‌شود  
+3. **INFO** (ℹ️): اطلاعات مهم - پیش‌فرض
+4. **DEBUG** (🔍): جزئیات - برای عیب‌یابی
+5. **TRACE** (🔬): جزئیات بسیار دقیق - برای توسعه
+
+### 📂 دسته‌بندی لاگ‌ها (Log Categories)
+
+لاگ‌ها به دسته‌های مختلف تقسیم می‌شوند:
+
+- **SYSTEM**: لاگ‌های سیستمی (پیش‌فرض فعال)
+- **TRANSLATION**: لاگ‌های ترجمه (پیش‌فرض فعال)
+- **STRUCTURES**: ساختارهای ترجمه (پیش‌فرض فعال)
+- **PROVIDER**: لاگ‌های provider ها (پیش‌فرض غیرفعال)
+- **UI**: لاگ‌های رابط کاربری
+
+### 🎮 دستورات کنترل لاگینگ
+
+#### 1. تنظیم سطح لاگینگ
+```
+Command Palette → i18n Nexus: Set Log Level
+```
+انتخاب از: ERROR, WARN, INFO, DEBUG, TRACE
+
+#### 2. فعال/غیرفعال کردن لاگ‌های Provider
+```
+Command Palette → i18n Nexus: Toggle Provider Logs
+```
+
+#### 3. فعال/غیرفعال کردن لاگ‌های ساختار
+```
+Command Palette → i18n Nexus: Toggle Structure Logs
+```
+
+#### 4. فعال/غیرفعال کردن Debug (Legacy)
+```
+Command Palette → i18n Nexus: Toggle Debug Output
+```
+
 ## تغییرات جدید در لاگ‌ها
 
 ### 🔍 لاگ‌های OllamaProvider
 
 #### قبل از ترجمه:
 ```
-Ollama: Starting translation to fa
-Ollama: Input content structure: 15 keys
-Ollama: Input content keys: admin.user-admin-page, admin.user-list-page, admin.users-list...
+ℹ️  INFO[TRANSLATION] Starting translation to fa
+🔍 DEBUG[PROVIDER] Input content structure: 15 keys
+🔍 DEBUG[PROVIDER] Input content keys: admin.user-admin-page, admin.user-list-page, admin.users-list...
 ```
 
 #### در حین API Call:
 ```
-Ollama: Calling API
-Ollama: API URL: http://localhost:11434/v1/chat/completions
-Ollama: Model: gemma3:4b
-Ollama: Request Body: { ... }
+🔍 DEBUG[PROVIDER] Calling API
+🔍 DEBUG[PROVIDER] API URL: http://localhost:11434/v1/chat/completions
+🔍 DEBUG[PROVIDER] Model: gemma3:4b
+🔍 DEBUG[PROVIDER] Request Body: { ... }
 ```
 
 #### پس از دریافت پاسخ:
 ```
-Ollama: API call successful
-Ollama: Response Status: 200
-Ollama: Raw response length: 2048 characters
-Ollama: Raw response preview: {"admin":{"user-admin-page":{"title":"صفحه مدیریت کاربران"...
+🔍 DEBUG[PROVIDER] API call successful
+🔍 DEBUG[PROVIDER] Response Status: 200
+🔍 DEBUG[PROVIDER] Raw response length: 2048 characters
+🔍 DEBUG[PROVIDER] Raw response preview: {"admin":{"user-admin-page":{"title":"صفحه مدیریت کاربران"...
 ```
 
 #### در حین Parsing:
 ```
-Ollama: Parsing response
-Ollama: Response starts with: {"admin":{"user-admin-page":{"title":"صفحه مدیریت کاربران"...
-Ollama: Found JSON match, length: 2048
-Ollama: JSON preview: {"admin":{"user-admin-page":{"title":"صفحه مدیریت کاربران"...
+🔍 DEBUG[PROVIDER] Parsing response
+🔍 DEBUG[PROVIDER] Response starts with: {"admin":{"user-admin-page":{"title":"صفحه مدیریت کاربران"...
+🔍 DEBUG[PROVIDER] Found JSON match, length: 2048
+🔍 DEBUG[PROVIDER] JSON preview: {"admin":{"user-admin-page":{"title":"صفحه مدیریت کاربران"...
 ```
 
 #### پس از ترجمه:
 ```
-Ollama: Parsed response structure: 15 keys
-Ollama: Translation to fa completed successfully
+🔍 DEBUG[PROVIDER] Parsed response structure: 15 keys
+ℹ️  INFO[TRANSLATION] Translation to fa completed successfully
 ```
 
 ### 🔍 لاگ‌های StreamingTranslationManager
 
 #### قبل از ترجمه هر Chunk:
 ```
-Translating chunk chunk_1 (1/7)
-Chunk chunk_1 structure: 3 keys
-Chunk chunk_1 sample keys: admin.user-admin-page, admin.user-list-page, admin.users-list
-Chunk chunk_1 sample values: صفحه مدیریت کاربران, لیست کاربران, کاربران
+ℹ️  INFO[TRANSLATION] Processing chunk chunk_1 (1/7)
+🔍 DEBUG[TRANSLATION] Chunk chunk_1 structure: 3 keys
+🔍 DEBUG[TRANSLATION] Chunk chunk_1 sample keys: admin.user-admin-page, admin.user-list-page, admin.users-list
+🔍 DEBUG[TRANSLATION] Chunk chunk_1 sample values: صفحه مدیریت کاربران, لیست کاربران, کاربران
 ```
 
 #### پس از ترجمه هر Chunk:
 ```
-LLM service returned result for chunk chunk_1
-Chunk chunk_1 translated structure: 3 keys
-Chunk chunk_1 translated sample: admin.user-admin-page, admin.user-list-page
+🔍 DEBUG[TRANSLATION] LLM service returned result for chunk chunk_1
+🔍 DEBUG[TRANSLATION] Chunk chunk_1 translated structure: 3 keys
+🔍 DEBUG[TRANSLATION] Chunk chunk_1 translated sample: admin.user-admin-page, admin.user-list-page
+```
+
+#### ساختارهای ترجمه (پس از ترجمه هر Chunk):
+```
+================================================================================
+🔄 TRANSLATION STRUCTURES FOR CHUNK_1
+================================================================================
+📄 ORIGINAL DATA STRUCTURE (15 keys):
+------------------------------------------------------------
+{
+  "admin.user-admin-page": "User Administration Page",
+  "admin.user-list-page": "User List Page",
+  "admin.users-list": "Users List",
+  ...
+}
+
+📤 INPUT TO LLM (3 keys):
+------------------------------------------------------------
+{
+  "admin.user-admin-page": "User Administration Page",
+  "admin.user-list-page": "User List Page",
+  "admin.users-list": "Users List"
+}
+
+📥 LLM RESPONSE (3 keys):
+------------------------------------------------------------
+{
+  "admin": {
+    "user-admin-page": "صفحه مدیریت کاربران",
+    "user-list-page": "صفحه لیست کاربران",
+    "users-list": "لیست کاربران"
+  }
+}
+
+📋 FINAL EXTRACTED STRUCTURE (3 keys):
+------------------------------------------------------------
+{
+  "admin.user-admin-page": "صفحه مدیریت کاربران",
+  "admin.user-list-page": "صفحه لیست کاربران",
+  "admin.users-list": "لیست کاربران"
+}
+
+📊 STRUCTURE COMPARISON SUMMARY:
+------------------------------------------------------------
+Original keys: admin.user-admin-page, admin.user-list-page, admin.users-list, ...
+Input keys: admin.user-admin-page, admin.user-list-page, admin.users-list
+Response keys: admin
+Final keys: admin.user-admin-page, admin.user-list-page, admin.users-list
+================================================================================
 ```
 
 #### در صورت خطا:
 ```
-Error in translateChunk for chunk_5: Error: Failed to parse Ollama response as JSON
-Chunk chunk_5 content that failed: {"admin":{"user-admin-page":{"title":"User Administration Page"...
+❌ ERROR[TRANSLATION] Error in translateChunk for chunk_5: Error: Failed to parse Ollama response as JSON
+❌ ERROR[TRANSLATION] Chunk chunk_5 content that failed: {"admin":{"user-admin-page":{"title":"User Administration Page"...
 ```
 
 ## نحوه استفاده از لاگ‌ها
 
 ### 1. تشخیص مشکلات ساختار
 لاگ‌ها نشان می‌دهند:
+- **ساختار داده اصلی**: داده‌های اولیه از فایل مبدا قبل از هر گونه تغییر
 - **تعداد کلیدها**: چند کلید در هر chunk وجود دارد
 - **نمونه کلیدها**: اولین چند کلید برای تشخیص ساختار
 - **نمونه مقادیر**: نوع و محتوای مقادیر
+- **مقایسه ساختارها**: مقایسه بین داده اصلی، ورودی LLM، پاسخ LLM و ساختار نهایی
 
 ### 2. تشخیص مشکلات ترجمه
 لاگ‌ها نشان می‌دهند:
@@ -88,27 +184,27 @@ Chunk chunk_5 content that failed: {"admin":{"user-admin-page":{"title":"User Ad
 
 ### ✅ ترجمه موفق:
 ```
-Ollama: Starting translation to fa
-Ollama: Input content structure: 5 keys
-Ollama: Input content keys: welcome, login, logout, save, cancel
-Ollama: Raw response length: 156 characters
-Ollama: Raw response preview: {"welcome":"خوش آمدید","login":"ورود","logout":"خروج"...
-Ollama: Found JSON match, length: 156
-Ollama: Parsed response structure: 5 keys
-Ollama: Translation to fa completed successfully
+ℹ️  INFO[TRANSLATION] Starting translation to fa
+🔍 DEBUG[PROVIDER] Input content structure: 5 keys
+🔍 DEBUG[PROVIDER] Input content keys: welcome, login, logout, save, cancel
+🔍 DEBUG[PROVIDER] Raw response length: 156 characters
+🔍 DEBUG[PROVIDER] Raw response preview: {"welcome":"خوش آمدید","login":"ورود","logout":"خروج"...
+🔍 DEBUG[PROVIDER] Found JSON match, length: 156
+🔍 DEBUG[PROVIDER] Parsed response structure: 5 keys
+ℹ️  INFO[TRANSLATION] Translation to fa completed successfully
 ```
 
 ### ❌ ترجمه ناموفق:
 ```
-Ollama: Starting translation to fa
-Ollama: Input content structure: 5 keys
-Ollama: Raw response length: 2048 characters
-Ollama: Raw response preview: I've analyzed the JSON content and here's what I found...
-Ollama: No JSON match found, trying to parse entire response
-Ollama: Failed to parse response as JSON
-Ollama: Response type: string
-Ollama: Response length: 2048
-Ollama: Raw response: I've analyzed the JSON content and here's what I found...
+ℹ️  INFO[TRANSLATION] Starting translation to fa
+🔍 DEBUG[PROVIDER] Input content structure: 5 keys
+🔍 DEBUG[PROVIDER] Raw response length: 2048 characters
+🔍 DEBUG[PROVIDER] Raw response preview: I've analyzed the JSON content and here's what I found...
+🔍 DEBUG[PROVIDER] No JSON match found, trying to parse entire response
+❌ ERROR[PROVIDER] Failed to parse response as JSON
+🔍 DEBUG[PROVIDER] Response type: string
+🔍 DEBUG[PROVIDER] Response length: 2048
+🔍 DEBUG[PROVIDER] Raw response: I've analyzed the JSON content and here's what I found...
 ```
 
 ## نکات مهم
@@ -133,24 +229,22 @@ Ollama: Raw response: I've analyzed the JSON content and here's what I found...
 
 ```
 === شروع ترجمه ===
-Translating chunk chunk_1 (1/7)
-Chunk chunk_1 structure: 3 keys
-Chunk chunk_1 sample keys: welcome, login, logout
-Chunk chunk_1 sample values: Welcome to our application, Please login to continue, Logout
-
-Ollama: Starting translation to fa
-Ollama: Input content structure: 3 keys
-Ollama: Input content keys: welcome, login, logout
-Ollama: Raw response length: 89 characters
-Ollama: Raw response preview: {"welcome":"به برنامه ما خوش آمدید","login":"لطفاً برای ادامه ورود نمایید"...
-Ollama: Found JSON match, length: 89
-Ollama: Parsed response structure: 3 keys
-Ollama: Translation to fa completed successfully
-
-LLM service returned result for chunk chunk_1
-Chunk chunk_1 translated structure: 3 keys
-Chunk chunk_1 translated sample: welcome, login, logout
-=== پایان ترجمه موفق ===
+ℹ️  INFO[TRANSLATION] Processing chunk chunk_1 (1/7)
+🔍 DEBUG[TRANSLATION] Chunk chunk_1 structure: 3 keys
+🔍 DEBUG[TRANSLATION] Chunk chunk_1 sample keys: welcome, login, logout
+🔍 DEBUG[TRANSLATION] Chunk chunk_1 sample values: Welcome to our application, Please login to continue, Logout
 ```
 
-این لاگ‌ها به شما کمک می‌کنند تا دقیقاً ببینید چه اتفاقی می‌افتد و مشکلات را سریع‌تر پیدا کنید! 🎯 
+## تنظیمات پیشنهادی
+
+### 🚀 برای استفاده عادی:
+- **Log Level**: INFO
+- **Categories**: SYSTEM, TRANSLATION, STRUCTURES
+
+### 🔍 برای عیب‌یابی:
+- **Log Level**: DEBUG
+- **Categories**: همه دسته‌ها
+
+### 🛠️ برای توسعه:
+- **Log Level**: TRACE
+- **Categories**: همه دسته‌ها 
