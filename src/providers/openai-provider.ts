@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import OpenAI from 'openai';
 import { ILLMProvider, TranslationResult, ValidationResult, TokenUsage } from '../llm-provider.interface';
 import { Logger } from '../logger';
+import { getProviderDefaultApiUrl, getProviderDefaultModel } from '../provider-config';
 
 export class OpenAIProvider implements ILLMProvider {
     private client!: OpenAI;
@@ -11,8 +12,8 @@ export class OpenAIProvider implements ILLMProvider {
 
     initialize(config: vscode.WorkspaceConfiguration, logger: Logger): void {
         const apiKey = config.get('llmApiKey');
-        const apiUrl = config.get('llmApiUrl');
-        this.llmModel = config.get('llmModel') || 'gpt-3.5-turbo';
+        const apiUrl = config.get('llmApiUrl') || getProviderDefaultApiUrl('openai');
+        this.llmModel = config.get('llmModel') || getProviderDefaultModel('openai');
         this.logger = logger || { log: console.log, error: console.error };
 
         if (typeof apiKey !== 'string' || apiKey.trim() === '') {
@@ -21,18 +22,13 @@ export class OpenAIProvider implements ILLMProvider {
 
         this.client = new OpenAI({ apiKey });
         
+        // Use the configured API URL or default
         if (typeof apiUrl === 'string' && apiUrl.trim() !== '') {
-            // If the URL already contains the full endpoint, use it as is
-            if (apiUrl.includes('/responses')) {
-                this.client.baseURL = apiUrl.replace('/responses', '');
-                this.logger.log(`Using custom API URL: ${apiUrl} (adjusted to: ${this.client.baseURL})`);
-            } else {
-                this.client.baseURL = apiUrl;
-                this.logger.log(`Using custom API URL: ${apiUrl}`);
-            }
+            this.client.baseURL = apiUrl;
+            this.logger.log(`Using API URL: ${apiUrl}`);
+        } else {
+            this.logger.log('Using default OpenAI API URL');
         }
-        //this.logger = logger;
-        // Add security check
         
         this.logger.log('OpenAIProvider initialized');
     }

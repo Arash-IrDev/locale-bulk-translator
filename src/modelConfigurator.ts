@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { Logger } from './logger';
+import { getAvailableProviders, getProviderConfig, getProviderDefaultApiUrl, getProviderDefaultModel, getProviderRequiresApiKey } from './provider-config';
 
 export class ModelConfigurator {
     private logger: Logger;
@@ -21,12 +22,13 @@ export class ModelConfigurator {
         const currentModel = config.get('llmModel') as string;
 
         // Prepare LLM provider options
-        const providerOptions: vscode.QuickPickItem[] = [
-            'openai', 'gemini', 'claude',"openai-compatible"
-        ].map(provider => ({
-            label: provider,
-            description: provider === currentProvider ? '(current)' : ''
-        }));
+        const providerOptions: vscode.QuickPickItem[] = getAvailableProviders().map(provider => {
+            const config = getProviderConfig(provider);
+            return {
+                label: provider,
+                description: `${config?.description || ''} ${provider === currentProvider ? '(current)' : ''}`
+            };
+        });
 
         this.logger.log(`Current provider: ${currentProvider}, Current model: ${currentModel}`);
 
@@ -43,10 +45,24 @@ export class ModelConfigurator {
             await config.update('llmProvider', provider, vscode.ConfigurationTarget.Global);
             this.logger.log(`Updated llmProvider to: ${provider}`);
 
-            // Input model name
+            // Get provider configuration
+            const providerConfig = getProviderConfig(provider);
+            if (!providerConfig) {
+                vscode.window.showErrorMessage(`Unknown provider: ${provider}`);
+                return;
+            }
+
+            // Set default API URL automatically
+            const defaultApiUrl = getProviderDefaultApiUrl(provider);
+            await config.update('llmApiUrl', defaultApiUrl, vscode.ConfigurationTarget.Global);
+            this.logger.log(`Updated llmApiUrl to: ${defaultApiUrl} (default for ${provider})`);
+
+            // Input model name with suggestions
+            const defaultModel = getProviderDefaultModel(provider);
             const model = await vscode.window.showInputBox({
                 prompt: `Enter the model name for ${provider}`,
-                value: currentModel
+                value: currentModel || defaultModel,
+                placeHolder: `Default: ${defaultModel}`
             });
 
             if (model) {
@@ -54,27 +70,22 @@ export class ModelConfigurator {
                 this.logger.log(`Updated llmModel to: ${model}`);
             }
 
-            // Input API URL
-            const apiUrl = await vscode.window.showInputBox({
-                prompt: `Enter the API URL for ${provider}`,
-                value: config.get('llmApiUrl') as string
-            });
+            // Input API Key only if required
+            if (getProviderRequiresApiKey(provider)) {
+                const apiKey = await vscode.window.showInputBox({
+                    prompt: `Enter the API Key for ${provider}`,
+                    value: config.get('llmApiKey') as string,
+                    password: true
+                });
 
-            if (apiUrl) {
-                await config.update('llmApiUrl', apiUrl, vscode.ConfigurationTarget.Global);
-                this.logger.log(`Updated llmApiUrl to: ${apiUrl}`);
-            }
-
-            // Input API Key
-            const apiKey = await vscode.window.showInputBox({
-                prompt: `Enter the API Key for ${provider}`,
-                value: config.get('llmApiKey') as string,
-                password: true
-            });
-
-            if (apiKey) {
-                await config.update('llmApiKey', apiKey, vscode.ConfigurationTarget.Global);
-                this.logger.log('Updated llmApiKey (value hidden for security)');
+                if (apiKey) {
+                    await config.update('llmApiKey', apiKey, vscode.ConfigurationTarget.Global);
+                    this.logger.log('Updated llmApiKey (value hidden for security)');
+                }
+            } else {
+                // Clear API key for providers that don't need it
+                await config.update('llmApiKey', '', vscode.ConfigurationTarget.Global);
+                this.logger.log(`Cleared llmApiKey (not required for ${provider})`);
             }
 
             vscode.window.showInformationMessage(`AI model configuration updated for ${provider}`);

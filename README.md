@@ -9,7 +9,7 @@ This project is currently in **early development** – more features, documentat
 ## 🚀 Features
 
 - Detect `locales/` folders (or any translation key/value files) in your project.
-- Translate values into multiple languages using GPT, Gemini, or local LLMs.
+- Translate values into multiple languages using GPT, Gemini, Claude, or local LLMs (including Ollama).
 - Handle **massive files** (20k+ lines) with smart chunking and streaming.
 - Preserve keys, placeholders, formatting, and structure perfectly.
 - Provide **diff view** to preview translations and approve or reject changes before applying.
@@ -60,6 +60,31 @@ The extension can handle extremely large translation files. Configure the follow
 - `i18nNexus.translationBatchSize` – number of keys processed per batch when streaming
 - `i18nNexus.batchTokenLimit` – approximate token threshold before the batch size is reduced
 - `i18nNexus.parallelBatchCount` – how many batches to translate in parallel
+
+## 🤖 AI Providers
+
+The extension supports multiple AI providers for translation:
+
+### Cloud Providers
+- **OpenAI** - GPT-3.5, GPT-4, and other OpenAI models
+- **Gemini** - Google's Gemini models
+- **Claude** - Anthropic's Claude models
+- **OpenAI-Compatible** - Any API compatible with OpenAI's format
+
+### Local Providers
+- **Ollama** - Local LLMs including Gemma, Llama, Mistral, and more
+
+### Setting up Ollama (Local LLM)
+1. Install Ollama from [ollama.ai](https://ollama.ai)
+2. Download a model: `ollama pull gemma3:4b`
+3. Start Ollama: `ollama serve`
+4. Configure the extension:
+   - Provider: `ollama`
+   - Model: `gemma3:4b` (or your preferred model)
+   - API URL: `http://localhost:11434/v1/chat/completions`
+   - API Key: (leave empty)
+
+See [OLLAMA_SETUP.md](OLLAMA_SETUP.md) for detailed setup instructions.
 
 ---
 

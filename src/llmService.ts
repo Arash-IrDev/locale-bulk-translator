@@ -5,6 +5,7 @@ import { OpenAIProvider } from './providers/openai-provider';
 import { GeminiProvider } from './providers/gemini-provider';
 import { ClaudeProvider } from './providers/claude-provider';
 import { OpenAICompatibleProvider } from './providers/openai-compatible-provider';
+import { OllamaProvider } from './providers/ollama-provider';
 
 
 export class LLMService {
@@ -43,6 +44,9 @@ export class LLMService {
                 break;
             case 'openai-compatible':
                 this.provider = new OpenAICompatibleProvider();
+                break;
+            case 'ollama':
+                this.provider = new OllamaProvider();
                 break;
             //case 'zhipuai':
             //    this.provider = new ZhipuAIProvider();

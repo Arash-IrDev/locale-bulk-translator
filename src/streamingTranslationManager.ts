@@ -5,6 +5,7 @@ import * as os from 'os';
 import { LLMService } from './llmService';
 import { Logger } from './logger';
 import { ChunkDiffViewer, ChunkDiffResult } from './chunkDiffViewer';
+import { getProviderConfig } from './provider-config';
 
 interface StreamingTranslationResult {
     chunkId: string;
@@ -87,8 +88,14 @@ export class StreamingTranslationManager {
                 throw new Error('Base path or base language not configured.');
             }
 
-            if (!llmProvider || !llmApiKey) {
-                throw new Error('LLM provider or API key not configured.');
+            if (!llmProvider) {
+                throw new Error('LLM provider not configured.');
+            }
+
+            // Check API key only for providers that require it
+            const providerConfig = getProviderConfig(llmProvider);
+            if (providerConfig && providerConfig.requiresApiKey && !llmApiKey) {
+                throw new Error('API key not configured for this provider.');
             }
 
             // تشخیص زبان فایل
@@ -746,6 +753,9 @@ Translation Summary:
         totalChunks: number
     ): Promise<StreamingTranslationResult> {
         this.logger.log(`Translating chunk ${chunkId} (${chunkNumber}/${totalChunks})`);
+        this.logger.log(`Chunk ${chunkId} structure: ${Object.keys(chunk).length} keys`);
+        this.logger.log(`Chunk ${chunkId} sample keys: ${Object.keys(chunk).slice(0, 3).join(', ')}`);
+        this.logger.log(`Chunk ${chunkId} sample values: ${Object.values(chunk).slice(0, 2).map(v => typeof v === 'string' ? v.substring(0, 50) : typeof v)}`);
 
         const startLine = (chunkNumber - 1) * this.chunkSize;
         const endLine = startLine + Object.keys(chunk).length;
@@ -754,6 +764,8 @@ Translation Summary:
             this.logger.log(`Calling LLM service for chunk ${chunkId}...`);
             const result = await this.llmService.translate(chunk, lang);
             this.logger.log(`LLM service returned result for chunk ${chunkId}`);
+            this.logger.log(`Chunk ${chunkId} translated structure: ${Object.keys(result.translatedContent).length} keys`);
+            this.logger.log(`Chunk ${chunkId} translated sample: ${Object.keys(result.translatedContent).slice(0, 2).join(', ')}`);
 
             return {
                 chunkId,
@@ -766,6 +778,7 @@ Translation Summary:
             };
         } catch (error) {
             this.logger.error(`Error in translateChunk for ${chunkId}: ${error}`);
+            this.logger.error(`Chunk ${chunkId} content that failed: ${JSON.stringify(chunk, null, 2).substring(0, 500)}...`);
             throw error;
         }
     }
@@ -975,29 +988,63 @@ Translation Summary:
      * تبدیل پاسخ LLM به ساختار اصلی - New improved version
      */
     private convertLLMResponseToOriginalStructureNew(llmResponse: any, originalChunk: any): any {
-        this.logger.log(`Converting LLM response to original structure (new method)...`);
+        this.logger.log(`Converting LLM response to original structure (normalized)...`);
         this.logger.log(`Original chunk keys: ${Object.keys(originalChunk).join(', ')}`);
         this.logger.log(`LLM response keys: ${Object.keys(llmResponse).join(', ')}`);
-        
-        // ابتدا LLM response را به flat structure تبدیل می‌کنیم
-        const flattenedResponse = this.flattenNestedContent(llmResponse);
-        this.logger.log(`Flattened response keys: ${Object.keys(flattenedResponse).join(', ')}`);
-        
-        // حالا باید ساختار اصلی را بازسازی کنیم
+    
         const result: any = {};
-        
+    
         for (const originalKey in originalChunk) {
-            if (flattenedResponse.hasOwnProperty(originalKey)) {
-                result[originalKey] = flattenedResponse[originalKey];
+            if (llmResponse.hasOwnProperty(originalKey)) {
+                // ✅ Root key مستقیم داده شده
+                result[originalKey] = this.normalizeNestedKeys(llmResponse[originalKey], originalKey);
             } else {
-                // اگر کلید در پاسخ LLM نبود، آن را نادیده بگیریم (نه از original استفاده کنیم)
-                // این باعث می‌شود که فقط ترجمه‌های واقعی نمایش داده شوند
-                this.logger.log(`Key ${originalKey} not found in LLM response, skipping`);
+                // ⚠️ Root key پیدا نشد → fallback با flatten
+                const flattened = this.flattenNestedContent(llmResponse);
+    
+                const filteredEntries = Object.entries(flattened)
+                    .filter(([key]) => key.startsWith(originalKey + "."))
+                    .map(([key, value]) => {
+                        // ✅ هرجا prefix دوباره تکرار شده، یک بارش رو حذف کن
+                        const normalizedKey = key.replace(
+                            new RegExp(`${originalKey}\\.${originalKey}\\.`,"g"), 
+                            `${originalKey}.`
+                        );
+                        return [normalizedKey, value];
+                    });
+    
+                if (filteredEntries.length > 0) {
+                    const rebuiltSubtree = this.unflattenContent(Object.fromEntries(filteredEntries));
+                    result[originalKey] = this.normalizeNestedKeys(rebuiltSubtree[originalKey] || rebuiltSubtree, originalKey);
+                }
             }
         }
-        
-        this.logger.log(`Final result keys: ${Object.keys(result).join(', ')}`);
+    
+        this.logger.log(`✅ Final normalized keys: ${Object.keys(result).join(', ')}`);
         return result;
+    }
+
+    /**
+     * پاک‌سازی prefixهای تکراری مثل access-control.access-control.add-permission
+     * و بازسازی ساختار برای merge/diff نهایی
+     */
+    private normalizeNestedKeys(obj: any, rootKey: string): any {
+        if (typeof obj !== 'object' || obj === null) {return obj;}
+
+        const normalized: any = {};
+        for (const key in obj) {
+            // اگر دوباره rootKey توی اسم کلید تکرار شده، حذفش کن
+            const cleanKey = key.startsWith(rootKey + ".")
+                ? key.replace(new RegExp(`^${rootKey}\\.`,""), "")
+                : key;
+
+            if (typeof obj[key] === 'object' && obj[key] !== null) {
+                normalized[cleanKey] = this.normalizeNestedKeys(obj[key], rootKey);
+            } else {
+                normalized[cleanKey] = obj[key];
+            }
+        }
+        return normalized;
     }
 
     private setNestedProperty(obj: any, path: string, value: any) {
