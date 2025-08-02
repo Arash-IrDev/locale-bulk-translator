@@ -525,41 +525,50 @@ Translation Summary:
     const config = vscode.workspace.getConfiguration('i18nNexus');
     const llmProvider = config.get<string>('llmProvider', 'openai');
     
-    // Ollama needs smaller chunks due to local processing limitations
-    if (llmProvider === 'ollama') {
-      // For very large files with Ollama, use conservative chunking
-      if (totalKeys > 1000) {
-        return { chunkSize: 8000, maxKeysPerChunk: 50 };
-      }
-      
-      // For medium files with Ollama
-      if (totalKeys > 500) {
-        return { chunkSize: 6000, maxKeysPerChunk: 40 };
-      }
-      
-      // For smaller files with Ollama
-      if (totalKeys > 100) {
-        return { chunkSize: 5000, maxKeysPerChunk: 30 };
-      }
-      
-      // For very small files with Ollama
-      return { chunkSize: 4000, maxKeysPerChunk: 20 };
+    // Provider-specific optimization strategies
+    switch (llmProvider) {
+      case 'ollama':
+        // Ollama: Conservative chunking for local processing
+        if (totalKeys > 1000) return { chunkSize: 8000, maxKeysPerChunk: 50 };
+        if (totalKeys > 500) return { chunkSize: 6000, maxKeysPerChunk: 40 };
+        if (totalKeys > 100) return { chunkSize: 5000, maxKeysPerChunk: 30 };
+        return { chunkSize: 4000, maxKeysPerChunk: 20 };
+        
+      case 'openai':
+        // OpenAI: Balanced chunking for cloud processing
+        if (totalKeys > 1000) return { chunkSize: 12000, maxKeysPerChunk: 80 };
+        if (totalKeys > 500) return { chunkSize: 10000, maxKeysPerChunk: 60 };
+        if (totalKeys > 100) return { chunkSize: 8000, maxKeysPerChunk: 40 };
+        return { chunkSize: 6000, maxKeysPerChunk: 25 };
+        
+      case 'claude':
+        // Claude: Moderate chunking for cloud processing
+        if (totalKeys > 1000) return { chunkSize: 15000, maxKeysPerChunk: 100 };
+        if (totalKeys > 500) return { chunkSize: 12000, maxKeysPerChunk: 70 };
+        if (totalKeys > 100) return { chunkSize: 10000, maxKeysPerChunk: 50 };
+        return { chunkSize: 8000, maxKeysPerChunk: 30 };
+        
+      case 'gemini':
+        // Gemini: Conservative chunking due to rate limits
+        if (totalKeys > 1000) return { chunkSize: 10000, maxKeysPerChunk: 60 };
+        if (totalKeys > 500) return { chunkSize: 8000, maxKeysPerChunk: 45 };
+        if (totalKeys > 100) return { chunkSize: 6000, maxKeysPerChunk: 35 };
+        return { chunkSize: 5000, maxKeysPerChunk: 20 };
+        
+      case 'openai-compatible':
+        // OpenAI-compatible: Balanced chunking
+        if (totalKeys > 1000) return { chunkSize: 12000, maxKeysPerChunk: 80 };
+        if (totalKeys > 500) return { chunkSize: 10000, maxKeysPerChunk: 60 };
+        if (totalKeys > 100) return { chunkSize: 8000, maxKeysPerChunk: 40 };
+        return { chunkSize: 6000, maxKeysPerChunk: 25 };
+        
+      default:
+        // Default: Conservative chunking for unknown providers
+        if (totalKeys > 1000) return { chunkSize: 10000, maxKeysPerChunk: 60 };
+        if (totalKeys > 500) return { chunkSize: 8000, maxKeysPerChunk: 45 };
+        if (totalKeys > 100) return { chunkSize: 6000, maxKeysPerChunk: 35 };
+        return { chunkSize: 5000, maxKeysPerChunk: 20 };
     }
-    
-    // For other providers (OpenAI, Claude, etc.), use more aggressive chunking
-    if (totalKeys > 1000) {
-      return { chunkSize: 25000, maxKeysPerChunk: 200 };
-    }
-    
-    if (totalKeys > 500) {
-      return { chunkSize: 20000, maxKeysPerChunk: 150 };
-    }
-    
-    if (totalKeys > 100) {
-      return { chunkSize: 15000, maxKeysPerChunk: 100 };
-    }
-    
-    return { chunkSize: 10000, maxKeysPerChunk: 50 };
   }
 
   private async translateChunk(
@@ -606,7 +615,11 @@ Translation Summary:
     // Get current LLM provider for additional optimizations
     const config = vscode.workspace.getConfiguration('i18nNexus');
     const llmProvider = config.get<string>('llmProvider', 'openai');
+    
+    // Provider-specific optimizations
     const isOllama = llmProvider === 'ollama';
+    const isLocalProvider = llmProvider === 'ollama';
+    const isRateLimitedProvider = llmProvider === 'gemini';
     
     // Calculate total content size for logging
     const totalContentSize = JSON.stringify(obj, null, 2).length;
@@ -615,21 +628,49 @@ Translation Summary:
     let currentSize = 0;
     let keysInCurrentChunk = 0;
     
-    // For Ollama, use simpler sorting to avoid complex processing
-    const sortedKeys = isOllama ? keys : keys.sort((a, b) => {
-      const aSize = JSON.stringify(obj[a]).length;
-      const bSize = JSON.stringify(obj[b]).length;
-      return bSize - aSize; // Sort by descending size to put larger values first
-    });
+    // Sorting strategy based on provider
+    let sortedKeys: string[];
+    if (isLocalProvider) {
+      // For local providers, use simpler sorting to avoid complex processing
+      sortedKeys = keys;
+    } else if (isRateLimitedProvider) {
+      // For rate-limited providers, sort by size to better distribute load
+      sortedKeys = keys.sort((a, b) => {
+        const aSize = JSON.stringify(obj[a]).length;
+        const bSize = JSON.stringify(obj[b]).length;
+        return bSize - aSize; // Sort by descending size
+      });
+    } else {
+      // For cloud providers, use balanced sorting
+      sortedKeys = keys.sort((a, b) => {
+        const aSize = JSON.stringify(obj[a]).length;
+        const bSize = JSON.stringify(obj[b]).length;
+        return bSize - aSize; // Sort by descending size
+      });
+    }
     
     for (const key of sortedKeys) {
       const value = obj[key];
       const keyValuePair = { [key]: value };
       const pairSize = JSON.stringify(keyValuePair, null, 2).length;
       
-      // For Ollama, be more conservative with chunk sizes
-      const sizeThreshold = isOllama ? optimalChunkSize * 0.7 : optimalChunkSize;
-      const keyThreshold = isOllama ? Math.min(maxKeysPerChunk, 25) : maxKeysPerChunk;
+      // Provider-specific thresholds
+      let sizeThreshold: number;
+      let keyThreshold: number;
+      
+      if (isLocalProvider) {
+        // Local providers: more conservative
+        sizeThreshold = optimalChunkSize * 0.7;
+        keyThreshold = Math.min(maxKeysPerChunk, 25);
+      } else if (isRateLimitedProvider) {
+        // Rate-limited providers: very conservative
+        sizeThreshold = optimalChunkSize * 0.6;
+        keyThreshold = Math.min(maxKeysPerChunk, 20);
+      } else {
+        // Cloud providers: balanced
+        sizeThreshold = optimalChunkSize * 0.8;
+        keyThreshold = maxKeysPerChunk;
+      }
       
       // Start a new chunk if:
       // 1. Current chunk is getting too large, OR
@@ -637,7 +678,8 @@ Translation Summary:
       // 3. Current chunk is already substantial and adding this would make it too large
       const shouldStartNewChunk = (currentSize + pairSize > sizeThreshold && keysInCurrentChunk > 0) || 
                                   keysInCurrentChunk >= keyThreshold ||
-                                  (isOllama && currentSize > sizeThreshold * 0.6 && pairSize > sizeThreshold * 0.3);
+                                  (isLocalProvider && currentSize > sizeThreshold * 0.6 && pairSize > sizeThreshold * 0.3) ||
+                                  (isRateLimitedProvider && currentSize > sizeThreshold * 0.5 && pairSize > sizeThreshold * 0.2);
       
       if (shouldStartNewChunk) {
         chunks.push(currentChunk);
@@ -659,7 +701,17 @@ Translation Summary:
     // Log chunking statistics for debugging
     const avgKeysPerChunk = Math.round(keys.length / chunks.length);
     const avgSizePerChunk = Math.round(totalContentSize / chunks.length);
-    const providerInfo = isOllama ? ' (Ollama optimized)' : '';
+    
+    // Provider-specific logging
+    let providerInfo = '';
+    if (isLocalProvider) {
+      providerInfo = ' (Local provider optimized)';
+    } else if (isRateLimitedProvider) {
+      providerInfo = ' (Rate-limited provider optimized)';
+    } else {
+      providerInfo = ' (Cloud provider optimized)';
+    }
+    
     this.logger.log(`Chunking optimization: ${keys.length} keys split into ${chunks.length} chunks (avg ${avgKeysPerChunk} keys, ${avgSizePerChunk} chars per chunk, max ${maxKeysPerChunk} keys per chunk)${providerInfo}`);
     
     return chunks;
